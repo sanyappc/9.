@@ -6,6 +6,7 @@
 module NDParse(parser) where
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Error
+import Text.Parsec.Prim (parsecMap)
 import NDType
 import NDAction
 
@@ -30,11 +31,11 @@ actions :: Parser NDAction
 actions =  do
            tmp <- try (ppop) <|> try (pdswap) <|> try (pswap) <|> 
                   try (pnext) <|> try (pprev) <|> try (psum) <|>
-                  try (psub) <|> try (pmul) <|> try (pdiv) <|> try (pmod) <|>
-                  try (pge) <|> try (ple) <|> try (peq) <|> try (pne) <|>
-                  try (pgt) <|> try (plt) <|>
+                  try (psub) <|> try (pmul) <|> try (pdiv) <|> try (pdivd) <|> 
+                  try (pmod) <|> try (pge) <|> try (ple) <|> try (peq) <|> 
+                  try (pne) <|> try (pgt) <|> try (plt) <|>
                   try (pnot) <|> try (pand) <|> try (por) <|> try (pxor) <|>
-                  try (ptop) <|> try (pprint)
+                  try (ptop) <|> pprint
            return tmp
 -- Actions - begin
 ppop :: Parser NDAction
@@ -77,9 +78,14 @@ pmul = do
        string "*"
        skip1
        return NDMul
+pdivd :: Parser NDAction
+pdivd = do
+        string "/"
+        skip1
+        return DivD
 pdiv :: Parser NDAction
 pdiv = do
-       string "/" <|> string "div"
+       string "div"
        skip1
        return Div
 pmod :: Parser NDAction
@@ -208,7 +214,7 @@ pstring2T = do
             return "\t"
 -- Types - end   
 skip = skipMany ( space <|> newline <|> tab ) 
-skip1 = space <|> newline <|> tab
+skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
 
 -- to make : skip for eof
 
