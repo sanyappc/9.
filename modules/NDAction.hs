@@ -26,8 +26,8 @@ data NDAction = NDPush NDTYPE
 	|Mod			-- остаток от деления
 	|GE			-- сравнения >:<:==:>=:<=:<>
 	|LE
-	|GT
-	|LT
+	|G
+	|L
 	|E
 	|NE
 	|NOT			-- Boolean
