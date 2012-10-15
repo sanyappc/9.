@@ -15,8 +15,8 @@ data NDAction = NDPush NDTYPE
 	|NDPop
 	|NDSwap
 	|NDDSwap
-	|NDNext			-- для смещения стека по кольцу.
-	|NDPrev
+	|NDRotR			-- для смещения стека по кольцу.
+	|NDRotL			--------------------------------
 	|NDDup
 	|NDAdd
 	|NDSub
@@ -26,8 +26,8 @@ data NDAction = NDPush NDTYPE
 	|Mod			-- остаток от деления
 	|GE			-- сравнения >:<:==:>=:<=:<>
 	|LE
-	|G
-	|L
+	|GT
+	|LT
 	|E
 	|NE
 	|NOT			-- Boolean
