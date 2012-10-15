@@ -1,10 +1,10 @@
 {-
- - Module : ndTypes.hs
+ - Module : NDType.hs
  - Description : Модуль, описывающий типы данных, используемые для манипулирования на стеке
  - Stability : experimental
  -}
 
-module ndType where
+module NDType where
 
 --------------------------------------------------------------------------------
 {- Описание типов нашего языка -}

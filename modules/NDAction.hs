@@ -1,12 +1,12 @@
 {-
- - Module : ndAction.hs
+ - Module : NDAction.hs
  - Description : Модуль, для описания типа Action, для манипулирования со стеком.
  - Stability : experimental
 -}
 
-module ndAction where
+module NDAction where
 
-import ndType
+import NDType
 
 -------------------------------------------------------------------------------
 {- Тип Action предназначен для описания базовых функций нашего языка -}
@@ -30,6 +30,7 @@ data NDAction = NDPush NDTYPE
 	|NE
 	|NOT			-- Boolean
 	|AND
+	|OR
 	|XOR
 	|INV
 	|TOP			-- отображает верхушку стека
