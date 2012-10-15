@@ -8,8 +8,7 @@ import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
                                        try, eof, string, char,
                                        digit, many, many1, anyChar,
                                        noneOf, skipMany, newline,
-                                       tab, space, (<|>))
-                                      
+                                       tab, space, (<|>))                                     
 import Text.Parsec.Error (showErrorMessages, errorMessages)
 import Text.Parsec.Prim (parsecMap)
 import NDType
@@ -242,6 +241,3 @@ pstring2T = do
 -- Types - end   
 skip = skipMany ( space <|> newline <|> tab ) 
 skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
-
--- to make : skip for eof
-
