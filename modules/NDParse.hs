@@ -4,8 +4,13 @@
  - Stability : experimental
 -}
 module NDParse(parser) where
-import Text.ParserCombinators.Parsec
-import Text.Parsec.Error
+import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
+                                       try, eof, string, char,
+                                       digit, many, many1, anyChar,
+                                       noneOf, skipMany, newline,
+                                       tab, space, (<|>))
+                                      
+import Text.Parsec.Error (showErrorMessages, errorMessages)
 import Text.Parsec.Prim (parsecMap)
 import NDType
 import NDAction
@@ -16,25 +21,44 @@ parser string = case ( parse parser' "" string ) of
                      Right xs -> xs
 parser' :: Parser [NDAction]
 parser' = do
-          tmp <- many (skipper)
+          skip
+          tmp <- manyTill (skipper) (try (eof))
           return tmp
 skipper :: Parser NDAction
 skipper = do
-          skip
           tmp <- try (actions) <|> types
+          skip
           return tmp        
 types :: Parser NDAction
 types = do
-        tmp <- try (pdigits) <|> try (pbool) <|> try (pchar) <|> pstring
+        tmp <- try (pdigits) <|> 
+               try (pbool) <|> 
+               try (pchar) <|> pstring
         return tmp
 actions :: Parser NDAction
 actions =  do
-           tmp <- try (ppop) <|> try (pdswap) <|> try (pswap) <|> 
-                  try (pnext) <|> try (pprev) <|> try (psum) <|>
-                  try (psub) <|> try (pmul) <|> try (pdiv) <|> try (pdivd) <|> 
-                  try (pmod) <|> try (pge) <|> try (ple) <|> try (peq) <|> 
-                  try (pne) <|> try (pgt) <|> try (plt) <|>
-                  try (pnot) <|> try (pand) <|> try (por) <|> try (pxor) <|>
+           tmp <- try (ppop) <|> 
+                  try (pdswap) <|> 
+                  try (pswap) <|> 
+                  try (protr) <|> 
+                  try (protl) <|> 
+                  try (pdup) <|> 
+                  try (psum) <|>
+                  try (psub) <|> 
+                  try (pmul) <|> 
+                  try (pdiv) <|> 
+                  try (pdivd) <|> 
+                  try (pmod) <|> 
+                  try (pge) <|> 
+                  try (ple) <|> 
+                  try (peq) <|> 
+                  try (pne) <|> 
+                  try (pgt) <|> 
+                  try (plt) <|>
+                  try (pnot) <|> 
+                  try (pand) <|> 
+                  try (por) <|> 
+                  try (pxor) <|>
                   try (ptop) <|> pprint
            return tmp
 -- Actions - begin
@@ -47,22 +71,25 @@ pdswap :: Parser NDAction
 pdswap = do
          string "dswap"
          skip1
-         space <|> newline <|> tab
          return NDDSwap
 pswap :: Parser NDAction
 pswap = do
         string "swap"
         skip1
         return NDSwap 
-pnext :: Parser NDAction
-pnext = do
-        string "next"
-        return NDNext
-pprev :: Parser NDAction
-pprev = do
-        string "prev"
+protr :: Parser NDAction
+protr = do
+        string "rotr"
+        return NDRotR
+protl :: Parser NDAction
+protl = do
+        string "rotl"
         skip1
-        return NDPrev
+        return NDRotL
+pdup :: Parser NDAction
+pdup = do
+       string "dup"
+       return NDDup
 psum :: Parser NDAction
 psum = do
        string "+"
