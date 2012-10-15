@@ -17,6 +17,7 @@ data NDAction = NDPush NDTYPE
 	|NDDSwap
 	|NDNext			-- для смещения стека по кольцу.
 	|NDPrev
+	|NDDup
 	|NDAdd
 	|NDSub
 	|NDMul
