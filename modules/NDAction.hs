@@ -17,12 +17,14 @@ data NDAction = NDPush NDTYPE
 	|NDDSwap
 	|NDNext			-- для смещения стека по кольцу.
 	|NDPrev
+	|NDDup
 	|NDAdd
 	|NDSub
 	|NDMul
-	|Div
-	|Mod
-	|GE				-- сравнения >:<:==:>=:<=:<>
+	|DivD			-- для деления в рамкам Double
+	|Div			-- целая часть деления
+	|Mod			-- остаток от деления
+	|GE			-- сравнения >:<:==:>=:<=:<>
 	|LE
 	|G
 	|L
@@ -32,9 +34,9 @@ data NDAction = NDPush NDTYPE
 	|AND
 	|OR
 	|XOR
-	|INV
 	|TOP			-- отображает верхушку стека
 	|PRINT			-- отображает стек
+	deriving (Show, Read)
 -------------------------------------------------------------------------------
 
 
