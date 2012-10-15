@@ -39,8 +39,10 @@ usage:  - все функции начинаются с префикса a - act
 *NDActionHandlers> aPrint $ aRotR x
 "[NDTYPEi 7,NDTYPEb True,NDTYPEd 8.0]"
 
-*NDActionHandlers> aConcat [NDTYPEs "hello, ", NDTYPEs "9.!"]
-[NDTYPEs "hello, 9.!"]
+*NDActionHandlers> aPrint [NDTYPEs "hello, ", NDTYPEs "9.!"]
+"[NDTYPEs \"9.!\",NDTYPEs \"hello, \"]"
+*NDActionHandlers> aPrint $ aConcat [NDTYPEs "hello, ", NDTYPEs "9.!"]
+"[NDTYPEs \"9.!hello, \"]"
 
 *NDActionHandlers> aPop x
 [NDTYPEd 8.0,NDTYPEb True]
@@ -53,7 +55,7 @@ usage:  - все функции начинаются с префикса a - act
 --------------------------------------------------------------------------------
  {-добавление элемента в стек-}
  aPush :: [NDTYPE] -> NDTYPE -> [NDTYPE]
- aPush stack x = [x] ++ stack
+ aPush stack x = x:stack
 
  {-дублирование последнего элемента на стеке-}
  aDup :: [NDTYPE] -> [NDTYPE]
@@ -70,7 +72,7 @@ usage:  - все функции начинаются с префикса a - act
 
  aRotL :: [NDTYPE] -> [NDTYPE] 
  aRotL [] = error "DataStack Error : in RotL. Empty Stack."
- aRotL  stack = [last stack] ++ (take (length stack - 1) stack)  
+ aRotL  stack = (last stack):(init stack)  
 
  aSwap :: [NDTYPE] -> [NDTYPE] 
  aSwap [] = error "DataStack Error : in Swap. Empty Stack."
@@ -95,7 +97,7 @@ usage:  - все функции начинаются с префикса a - act
  aDiv stack = error "DataStack Error : In DivI. Incompatible types" 
 
  aMod :: [NDTYPE] -> [NDTYPE]
- aMod ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEi (div x y):t)
+ aMod ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEi (mod x y):t)
  aMod stack = error "DataStack Error : In Mod. Incompatible types" 
 
 
@@ -136,10 +138,10 @@ usage:  - все функции начинаются с префикса a - act
 --------------------------------------------------------------------------------
 
  aConcat ::[NDTYPE] -> [NDTYPE]
- aConcat ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEs (x ++ y)):t
- aConcat ((NDTYPEs x):(NDTYPEc y):t) = (NDTYPEs (x ++ [y])):t
- aConcat ((NDTYPEc x):(NDTYPEs y):t) = (NDTYPEs ([x] ++ y)):t
- aConcat ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEs ([x] ++ [y])):t
+ aConcat ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEs (y ++ x)):t
+ aConcat ((NDTYPEs x):(NDTYPEc y):t) = (NDTYPEs ([y] ++ x)):t
+ aConcat ((NDTYPEc x):(NDTYPEs y):t) = (NDTYPEs (y ++ [x])):t
+ aConcat ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEs ([y] ++ [x])):t
  aConcat stack = error "DataStack Error : Incompatible iypes (should be - Char | String)" 
 
   -------------------------------------------------------------------------------
