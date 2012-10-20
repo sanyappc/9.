@@ -8,7 +8,7 @@ import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
                                        try, eof, string, char,
                                        digit, many, many1, anyChar,
                                        noneOf, skipMany, newline,
-                                       tab, space, (<|>))                                     
+                                       tab, space, (<|>), lookAhead)                                     
 import Text.Parsec.Error (showErrorMessages, errorMessages)
 import Text.Parsec.Prim (parsecMap)
 import NDType
@@ -21,44 +21,45 @@ parser string = case ( parse parser' "" string ) of
 parser' :: Parser [NDAction]
 parser' = do
           skip
-          tmp <- manyTill (skipper) (try (eof))
+          tmp <- manyTill skipper (try eof)
           return tmp
 skipper :: Parser NDAction
 skipper = do
-          tmp <- try (actions) <|> types
+          tmp <- try actions <|> types -- <|> functions
           skip
           return tmp        
 types :: Parser NDAction
 types = do
-        tmp <- try (pdigits) <|> 
-               try (pbool) <|> 
-               try (pchar) <|> pstring
+        tmp <- try pdigits <|> 
+               try pbool <|> 
+               try pchar <|> pstring
         return tmp
 actions :: Parser NDAction
 actions =  do
-           tmp <- try (ppop) <|> 
-                  try (pdswap) <|> 
-                  try (pswap) <|> 
-                  try (protr) <|> 
-                  try (protl) <|> 
-                  try (pdup) <|> 
-                  try (psum) <|>
-                  try (psub) <|> 
-                  try (pmul) <|> 
-                  try (pdiv) <|> 
-                  try (pdivd) <|> 
-                  try (pmod) <|> 
-                  try (pge) <|> 
-                  try (ple) <|> 
-                  try (peq) <|> 
-                  try (pne) <|> 
-                  try (pgt) <|> 
-                  try (plt) <|>
-                  try (pnot) <|> 
-                  try (pand) <|> 
-                  try (por) <|> 
-                  try (pxor) <|>
-                  try (ptop) <|> pprint
+           tmp <- try ppop <|> 
+                  try pdswap <|> 
+                  try pswap <|> 
+                  try protr <|> 
+                  try protl <|> 
+                  try pdup <|> 
+                  try psum <|>
+                  try psub <|> 
+                  try pmul <|> 
+                  try pdiv <|> 
+                  try pdivd <|> 
+                  try pmod <|> 
+                  try pge <|> 
+                  try ple <|> 
+                  try peq <|> 
+                  try pne <|> 
+                  try pgt <|> 
+                  try plt <|>
+                  try pnot <|> 
+                  try pand <|> 
+                  try por <|> 
+                  try pxor <|>
+                  try ptop <|> 
+                  try pprint <|> pcondition
            return tmp
 -- Actions - begin
 ppop :: Parser NDAction
@@ -188,14 +189,14 @@ pbool = do
 pdigits :: Parser NDAction
 pdigits = do
         tmp0 <- char '-' <|> digit
-        tmp1 <- many (digit)
-        tmp2 <- try ( pdouble (tmp0 : tmp1) ) <|> pint (tmp0 : tmp1)
+        tmp1 <- many digit
+        tmp2 <- try $ pdouble (tmp0 : tmp1) <|> pint (tmp0 : tmp1)
         skip1
         return tmp2
 pdouble :: String -> Parser NDAction
 pdouble i = do
             char '.'
-            tmp <- many1 (digit)
+            tmp <- many1 $ digit
             return $ NDPush (NDTYPEd ( read ( i ++ "." ++ tmp) :: Double ))
 pint :: String -> Parser NDAction
 pint i = return (NDPush (NDTYPEi ( read i :: Int )))
@@ -216,7 +217,7 @@ pstring = do
 pstring' :: Parser String
 pstring' = do
            char '\\'
-           tmp <- try (pstring1) <|> pstring2
+           tmp <- try pstring1 <|> pstring2
            return tmp
 pstring1 :: Parser String
 pstring1 = do
@@ -224,7 +225,7 @@ pstring1 = do
            return [tmp]
 pstring2 :: Parser String
 pstring2 = do
-           tmp <- try(pstring2N) <|> try(pstring2R) <|> pstring2T
+           tmp <- try pstring2N <|> try pstring2R <|> pstring2T
            return tmp
 pstring2N :: Parser String
 pstring2N = do
@@ -239,5 +240,25 @@ pstring2T = do
             char 't'
             return "\t"
 -- Types - end   
+-- IF statement - begin
+parserelse :: Parser [NDAction]
+parserelse = do
+             string "else"
+             skip1
+             tmp <- manyTill skipper (try $ string "endif")
+             return tmp
+parserendif :: Parser [NDAction]
+parserendif = do
+              string "endif"
+              return []
+pcondition :: Parser NDAction
+pcondition = do
+             string "then"
+             skip1
+             skip
+             pthen <- manyTill skipper (lookAhead ( try (string "else") <|> try (string "endif")))
+             pelse <- try parserelse <|> parserendif
+             return (NDIf pthen pelse)
+-- IF statement - end
 skip = skipMany ( space <|> newline <|> tab ) 
 skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
