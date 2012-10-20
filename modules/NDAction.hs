@@ -36,6 +36,10 @@ data NDAction = NDPush NDTYPE
 	|XOR
 	|TOP			-- отображает верхушку стека
 	|PRINT			-- отображает стек
+	|NDIf [NDAction] [NDAction] -- условие NDIf [При True] [При False]
+	|NDNewFunction String [NDAction] -- объявление функции
+	|NDCallFunction String -- вызов функции
+	|NDExit         -- выход из п/программы, т.е. функции
 	deriving (Show, Read)
 -------------------------------------------------------------------------------
 
