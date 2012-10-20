@@ -25,9 +25,10 @@ parser' = do
           return tmp
 skipper :: Parser NDAction
 skipper = do
-          tmp <- try actions <|> types -- <|> functions
+          tmp <- try actions <|> 
+                 try types <|> pcallf
           skip
-          return tmp        
+          return tmp 
 types :: Parser NDAction
 types = do
         tmp <- try pdigits <|> 
@@ -59,7 +60,9 @@ actions =  do
                   try por <|> 
                   try pxor <|>
                   try ptop <|> 
-                  try pprint <|> pcondition
+                  try pprint <|> 
+                  try pexit <|> 
+                  try pnewf <|> pcondition
            return tmp
 -- Actions - begin
 ppop :: Parser NDAction
@@ -172,14 +175,19 @@ pxor = do
        return XOR
 ptop :: Parser NDAction
 ptop = do
-       string "@"
+       char '@'
        skip1
        return TOP
 pprint :: Parser NDAction
 pprint = do
-         string "?"
+         char '?'
          skip1
          return PRINT
+pexit :: Parser NDAction
+pexit = do
+        string "exit"
+        skip1
+        return NDExit
 -- Actions - end  
 -- Types - begin     
 pbool :: Parser NDAction
@@ -260,5 +268,20 @@ pcondition = do
              pelse <- try parserelse <|> parserendif
              return (NDIf pthen pelse)
 -- IF statement - end
+-- functions - begin
+pnewf :: Parser NDAction
+pnewf = do
+        char '.'
+        tmp1 <- many1 $ noneOf " \n\r\t"
+        skip1
+        skip
+        tmp2 <- manyTill skipper (char '#')
+        return (NDNewFunction tmp1 tmp2)
+pcallf :: Parser NDAction
+pcallf = do
+         tmp <- many1 $ noneOf " \n\r\t"
+         skip1
+         return (NDCallFunction tmp)
+-- functions - end
 skip = skipMany ( space <|> newline <|> tab ) 
 skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
