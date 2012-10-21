@@ -1,26 +1,29 @@
 module Main where
 
 import Runtime 
+import NDType
+import NDParse
+import NDAction
+import NDActionHandlers
 import Text.Printf 
 import NDType
 
 main::IO ()
-
-test::String
-test = getLine >>= return
-
-tst::String
-tst = do
-	input <- getLine
-	return input
-
-main =
-	printf "Today is a good day =)\n" >>
---	return(tloop []) >>
-	printf "Goodbye!\n"
---	where
---		tloop::[NDTYPE] -> [NDTYPE]
---		tloop stack = 
---			printf ":" >>
---			getLine >>= return (
-
+main =	printf "Today is a good day =)\n" >>
+		mloop [] >>
+		printf "Goodbye!\n" >>
+		return ()
+	where
+	mloop stack = do
+		printf ":"
+		input <- getLine
+		if input == "bye"
+		then
+			return ()
+		else
+			mread stack input >>=
+			(\t -> print t >> mloop t) 
+	
+	mread::[NDTYPE] -> String -> IO [NDTYPE]
+	mread stack input =
+			return $execute (parser input) stack

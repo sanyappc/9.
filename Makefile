@@ -9,11 +9,11 @@ TARGET = main.hs
 all:
 	$(CC) $(CFLAGS) $(MODULES) ./$(TARGET) -o $(EXECUTABLE)
 	mv $(EXECUTABLE) ./bin/
-	mv *.o ./obj/
+	rm -f *.o
 	
 clean:
 	find . -name '*.hi' -delete
 	find . -name '*.hs.*' -delete
 	find . -name '*.o' -delete
 	find . -name '*.hs~' -delete
-	rm -f out*
+	rm -f ./bin/$(EXECUTABLE)
