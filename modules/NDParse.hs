@@ -4,6 +4,7 @@
  - Stability : experimental
 -}
 module NDParse(parser) where
+
 import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
                                        try, eof, string, char,
                                        digit, many, many1, anyChar,
@@ -11,6 +12,7 @@ import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
                                        tab, space, (<|>), lookAhead)                                     
 import Text.Parsec.Error (showErrorMessages, errorMessages)
 import Text.Parsec.Prim (parsecMap)
+
 import NDType
 import NDAction
 
