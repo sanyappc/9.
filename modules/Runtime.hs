@@ -65,4 +65,15 @@ doNDAction NOT stack = aNot stack
 doNDAction AND stack = aAnd stack
 doNDAction OR stack = aOr stack
 doNDAction XOR stack = aXor stack
--- нужны ифы и функции
+doNDAction (NDIf true false) (x:xs)
+	| toBool x = execute true xs
+	| otherwise = execute false xs
+
+
+------------------------------------------------------------------------
+{- Function return Bool from NDBool or generate error -}
+------------------------------------------------------------------------
+toBool::NDTYPE -> Bool
+toBool (NDTYPEb True) = True
+toBool (NDTYPEb False) = False
+toBool bool = error "Type Error : the value is not Boolean!!!"
