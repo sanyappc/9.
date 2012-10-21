@@ -15,30 +15,30 @@ data NDAction = NDPush NDTYPE
 	|NDPop
 	|NDSwap
 	|NDDSwap
-	|NDRotR			-- для смещения стека по кольцу.
-	|NDRotL			--------------------------------
+	|NDRotR								-- для смещения стека по кольцу.
+	|NDRotL								--------------------------------
 	|NDDup
 	|NDAdd
 	|NDSub
 	|NDMul
-	|DivD			-- для деления в рамкам Double
-	|Div			-- целая часть деления
-	|Mod			-- остаток от деления
-	|GE			-- сравнения >:<:==:>=:<=:<>
+	|DivD								-- для деления в рамкам Double
+	|Div								-- целая часть деления
+	|Mod								-- остаток от деления
+	|GE									-- сравнения >:<:==:>=:<=:<>
 	|LE
 	|G
 	|L
 	|E
 	|NE
-	|NOT			-- Boolean
+	|NOT								-- Boolean
 	|AND
 	|OR
 	|XOR
-	|TOP			-- отображает верхушку стека
-	|PRINT			-- отображает стек
-	|NDIf [NDAction] [NDAction] -- условие NDIf [При True] [При False]
-	|NDNewFunction String [NDAction] -- объявление функции
-	|NDCallFunction String -- вызов функции
+	|TOP								-- отображает верхушку стека
+	|PRINT								-- отображает стек
+	|NDIf [NDAction] [NDAction]			-- условие NDIf [При True] [При False]
+	|NDNewFunction String [NDAction]	-- объявление функции
+	|NDCallFunction String				-- вызов функции
 	|NDExit         -- выход из п/программы, т.е. функции
 	deriving (Show, Read)
 -------------------------------------------------------------------------------
