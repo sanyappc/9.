@@ -209,7 +209,7 @@ pdouble i = do
             tmp <- many1 $ digit
             return $ NDPush (NDTYPEd ( read ( i ++ "." ++ tmp) :: Double ))
 pint :: String -> Parser NDAction
-pint i = return (NDPush (NDTYPEi ( read i :: Int )))
+pint i = return (NDPush (NDTYPEi ( read i :: Integer )))
 pchar :: Parser NDAction
 pchar = do
         char '\''

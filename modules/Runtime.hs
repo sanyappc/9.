@@ -72,14 +72,12 @@ doNDAction XOR prog = prog{stack = aXor (stack prog)}
 doNDAction (NDIf true false) Program{stack = (x:xs), funcs = f}
 	| toBool x = execute true Program{stack = xs, funcs = f}
 	| otherwise = execute false Program{stack = xs, funcs = f}
-doNDAction (NDNewFunction name acts) prog = prog{funcs = insert name Func{actions=acts} (funcs prog) }
+doNDAction (NDNewFunction name acts) prog
+	| member name (funcs prog) = prog{funcs = Data.Map.adjust (\x -> Func{actions = acts}) name (funcs prog) }
+	| otherwise = prog{funcs = Data.Map.insert name Func{actions=acts} (funcs prog) }
 doNDAction (NDCallFunction name) prog
 	| member name (funcs prog) = execute (actions ((funcs prog) ! name)) prog
 	| otherwise = error $"Input Error : Function " ++ name ++ " was not declared."
-{-
-	| isNothing (Data.Map.lookup name (funcs prog)) = error "Input Error : Function " ++ name ++ " was not declared."
-	| otherwise = execute (fromMaybe [] (Data.Map.lookup name (funcs prog))) prog
--}
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
 ------------------------------------------------------------------------
@@ -88,15 +86,3 @@ toBool (NDTYPEb True) = True
 toBool (NDTYPEb False) = False
 toBool bool = error "Type Error : Incompatible types (should be - Bool)"
 
-------------------------------------------------------------------------
-fromMaybe              :: a -> Maybe a -> a
-fromMaybe d Nothing    =  d
-fromMaybe d (Just a)   =  a
-
-
-isNothing        :: Maybe a -> Bool
-isNothing        =  not . isJust
-
-isJust                 :: Maybe a -> Bool
-isJust (Just a)        =  True
-isJust Nothing         =  False

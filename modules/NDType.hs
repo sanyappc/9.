@@ -9,7 +9,7 @@ module NDType where
 --------------------------------------------------------------------------------
 {- Описание типов нашего языка -}
 --------------------------------------------------------------------------------
-data NDTYPE = NDTYPEi Int
+data NDTYPE = NDTYPEi Integer
 	|NDTYPEd Double
 	|NDTYPEc Char
 	|NDTYPEs String

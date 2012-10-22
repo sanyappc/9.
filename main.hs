@@ -17,7 +17,7 @@ main =	printf "Today is a good day =)\n" >>
 	mloop prog = do
 		printf ":"
 		input <- getLine
-		if input == "bye"
+		if input == ":q"
 		then
 			return ()
 		else
