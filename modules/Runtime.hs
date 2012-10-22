@@ -12,64 +12,70 @@ import NDAction
 import NDActionHandlers
 
 import Text.Printf
+import Data.Map
+{- Read about maps: http://book.realworldhaskell.org/read/data-structures.html -}
+{- http://www.haskell.org/ghc/docs/6.12.2/html/libraries/containers-0.3.0.0/Data-Map.html -}
 
 ------------------------------------------------------------------------
-{- Per line with shell -}
+{- Data structure for functions implementation. -}
 ------------------------------------------------------------------------
--- shell::[NDTYPE] -> [NDTYPE]
+data Func = Func { actions::[NDAction] }
 
-
+------------------------------------------------------------------------
+{- Data structure for program representation -}
+------------------------------------------------------------------------
+data Program = Program { stack::[NDTYPE], funcs::(Map String Func)}
 
 ------------------------------------------------------------------------
 {- Per line loop of runtime -}
 ------------------------------------------------------------------------
-loop::[NDTYPE] -> String -> [NDTYPE]
+loop::Program -> String -> Program
 
-loop stack str =
-	execute (parser str) stack
-
+loop prog str = execute (parser str) prog
 ------------------------------------------------------------------------
 {- Execute Actions... -}
 {- actions->stack->changed_stack -}
 ------------------------------------------------------------------------
-execute::[NDAction] -> [NDTYPE] -> [NDTYPE]
+execute::[NDAction] -> Program -> Program
 
-execute [] stack = stack
-execute (x:xs) stack = execute xs (doNDAction x stack)
-
+execute [] prog = prog
+execute (x:xs) prog = execute xs (doNDAction x prog)
 ------------------------------------------------------------------------
 {- Execution of single NDAction -}
 ------------------------------------------------------------------------
-doNDAction::NDAction -> [NDTYPE] -> [NDTYPE]
+doNDAction::NDAction -> Program -> Program
 
-doNDAction NDPop stack = aPop stack
-doNDAction (NDPush a) stack = aPush stack a
-doNDAction NDSwap stack = aSwap stack
+doNDAction NDPop prog = prog{stack = aPop (stack prog)} 
+doNDAction (NDPush a) prog = prog{stack = aPush (stack prog) a}
+doNDAction NDSwap prog = prog{stack = aSwap (stack prog)}  
+
 -- doNDAction NDDSwap stack = aDSwap stack	-- Коля пока не реализовал .
-doNDAction NDRotR stack = aRotR stack
-doNDAction NDRotL stack = aRotL stack
-doNDAction NDDup stack = aDup stack
-doNDAction NDAdd stack = aAdd stack
-doNDAction NDSub stack = aSub stack
-doNDAction NDMul stack = aMul stack
-doNDAction DivD stack = aDivD stack
-doNDAction Div stack = aDiv stack
-doNDAction Mod stack = aMod stack
+doNDAction NDRotR prog = prog{stack = aRotR (stack prog)}
+doNDAction NDRotL prog = prog{stack = aRotL (stack prog)}
+doNDAction NDDup prog = prog{stack = aDup (stack prog)}
+doNDAction NDAdd prog = prog{stack = aAdd (stack prog)}
+doNDAction NDSub prog = prog{stack = aSub (stack prog)}
+doNDAction NDMul prog = prog{stack = aMul (stack prog)}
+doNDAction DivD prog = prog{stack = aDivD (stack prog)}
+doNDAction Div prog = prog{stack = aDiv (stack prog)}
+doNDAction Mod prog = prog{stack = aMod (stack prog)}
 -- doNDAction GE stack = aGE stack			-- Коля пока не реализовал .
 -- doNDAction LE stack = aGE stack			-- Коля пока не реализовал .
-doNDAction G stack = aGT stack
-doNDAction L stack = aLT stack
-doNDAction E stack = aE stack
+doNDAction G prog = prog{stack = aGT (stack prog)}
+doNDAction L prog = prog{stack = aLT (stack prog)}
+doNDAction E prog = prog{stack = aE (stack prog)}
 -- doNDAction NE stack = aNE stack			-- Коля пока не реализовал .
-doNDAction NOT stack = aNot stack
-doNDAction AND stack = aAnd stack
-doNDAction OR stack = aOr stack
-doNDAction XOR stack = aXor stack
-doNDAction (NDIf true false) (x:xs)
-	| toBool x = execute true xs
-	| otherwise = execute false xs
-
-
+doNDAction NOT prog = prog{stack = aNot (stack prog)}
+doNDAction AND prog = prog{stack = aAnd (stack prog)}
+doNDAction OR prog = prog{stack = aOr (stack prog)}
+doNDAction XOR prog = prog{stack = aXor (stack prog)}
+doNDAction (NDIf true false) Program{stack = (x:xs), funcs = f}
+	| toBool x = execute true Program{stack = xs, funcs = f}
+	| otherwise = execute false Program{stack = xs, funcs = f}
+doNDAction (NDNewFunction name acts) prog = prog{funcs = insert name Func{actions=acts} (funcs prog) }
+doNDAction (NDCallFunction name) prog
+	| isNothing (Data.Map.lookup name (funcs prog)) = error "Input Error : such function was not declared."
+	| otherwise = execute (fromMaybe [] (Data.Map.lookup name (funcs prog))) prog
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
 ------------------------------------------------------------------------
@@ -77,3 +83,16 @@ toBool::NDTYPE -> Bool
 toBool (NDTYPEb True) = True
 toBool (NDTYPEb False) = False
 toBool bool = error "Type Error : the value is not Boolean!!!"
+
+------------------------------------------------------------------------
+fromMaybe              :: a -> Maybe a -> a
+fromMaybe d Nothing    =  d
+fromMaybe d (Just a)   =  a
+
+
+isNothing        :: Maybe a -> Bool
+isNothing        =  not . isJust
+
+isJust                 :: Maybe a -> Bool
+isJust (Just a)        =  True
+isJust Nothing         =  False

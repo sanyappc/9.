@@ -6,24 +6,24 @@ import NDParse
 import NDAction
 import NDActionHandlers
 import Text.Printf 
-import NDType
+import Data.Map
 
 main::IO ()
 main =	printf "Today is a good day =)\n" >>
-		mloop [] >>
+		mloop Program{stack = [], funcs = fromList [] } >>
 		printf "Goodbye!\n" >>
 		return ()
 	where
-	mloop stack = do
+	mloop prog = do
 		printf ":"
 		input <- getLine
 		if input == "bye"
 		then
 			return ()
 		else
-			mread stack input >>=
-			(\t -> print t >> mloop t) 
+			mread prog input >>=
+			(\t -> print (stack t) >> mloop t) 
 	
-	mread::[NDTYPE] -> String -> IO [NDTYPE]
+	mread::Program -> String -> IO Program
 	mread stack input =
 			return $execute (parser input) stack
