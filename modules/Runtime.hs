@@ -74,15 +74,19 @@ doNDAction (NDIf true false) Program{stack = (x:xs), funcs = f}
 	| otherwise = execute false Program{stack = xs, funcs = f}
 doNDAction (NDNewFunction name acts) prog = prog{funcs = insert name Func{actions=acts} (funcs prog) }
 doNDAction (NDCallFunction name) prog
-	| isNothing (Data.Map.lookup name (funcs prog)) = error "Input Error : such function was not declared."
+	| member name (funcs prog) = execute (actions ((funcs prog) ! name)) prog
+	| otherwise = error $"Input Error : Function " ++ name ++ " was not declared."
+{-
+	| isNothing (Data.Map.lookup name (funcs prog)) = error "Input Error : Function " ++ name ++ " was not declared."
 	| otherwise = execute (fromMaybe [] (Data.Map.lookup name (funcs prog))) prog
+-}
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
 ------------------------------------------------------------------------
 toBool::NDTYPE -> Bool
 toBool (NDTYPEb True) = True
 toBool (NDTYPEb False) = False
-toBool bool = error "Type Error : the value is not Boolean!!!"
+toBool bool = error "Type Error : Incompatible types (should be - Bool)"
 
 ------------------------------------------------------------------------
 fromMaybe              :: a -> Maybe a -> a
