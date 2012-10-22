@@ -49,7 +49,7 @@ doNDAction NDPop prog = prog{stack = aPop (stack prog)}
 doNDAction (NDPush a) prog = prog{stack = aPush (stack prog) a}
 doNDAction NDSwap prog = prog{stack = aSwap (stack prog)}  
 
--- doNDAction NDDSwap stack = aDSwap stack	-- Коля пока не реализовал .
+--doNDAction NDDSwap stack = aDSwap stack	-- Коля реализовал .
 doNDAction NDRotR prog = prog{stack = aRotR (stack prog)}
 doNDAction NDRotL prog = prog{stack = aRotL (stack prog)}
 doNDAction NDDup prog = prog{stack = aDup (stack prog)}
@@ -59,12 +59,12 @@ doNDAction NDMul prog = prog{stack = aMul (stack prog)}
 doNDAction DivD prog = prog{stack = aDivD (stack prog)}
 doNDAction Div prog = prog{stack = aDiv (stack prog)}
 doNDAction Mod prog = prog{stack = aMod (stack prog)}
--- doNDAction GE stack = aGE stack			-- Коля пока не реализовал .
--- doNDAction LE stack = aGE stack			-- Коля пока не реализовал .
+--doNDAction GE stack = aGE stack			-- Коля реализовал .
+--doNDAction LE stack = aLE stack			-- Коля реализовал .
 doNDAction G prog = prog{stack = aGT (stack prog)}
 doNDAction L prog = prog{stack = aLT (stack prog)}
 doNDAction E prog = prog{stack = aE (stack prog)}
--- doNDAction NE stack = aNE stack			-- Коля пока не реализовал .
+--doNDAction NE stack = aNE stack			-- Коля реализовал .
 doNDAction NOT prog = prog{stack = aNot (stack prog)}
 doNDAction AND prog = prog{stack = aAnd (stack prog)}
 doNDAction OR prog = prog{stack = aOr (stack prog)}

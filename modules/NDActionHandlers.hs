@@ -1,7 +1,11 @@
 {-
  - Module : NDActionHandlers.hs
  - Description : Модуль, описывающий обработчики событий типа ActionNode
- - Stability : experimental. На данный момент реализованы не все ф-ции.
+ - Stability : experimental. 
+ 		v1.1 
+ 		- исправлено выполнение бинарных операций
+ 		- добавлены операции (>=, <=, /=, DSwap) 
+ 		- исправлен вывод ошибок
  -}
 
 
@@ -10,43 +14,9 @@
 
 ------------------------------------------------------------------------------- 
 {-
-
 usage:  - все функции начинаются с префикса a - action. 	
 	- в качестве аргумента - [NDTYPE]
-
-*NDActionHandlers> let x = [NDTYPEi 7, NDTYPEd 8]
-
-*NDActionHandlers> aPrint x
-"[NDTYPEd 8.0,NDTYPEi 7]"
-
-*NDActionHandlers> aMul x
-[NDTYPEd 56.0]
-
-*NDActionHandlers> aE x
-[NDTYPEb False]
-
-*NDActionHandlers> let x = [NDTYPEi 7, NDTYPEd 8, NDTYPEb True]
-
--- так как наш стек предствлен наоборот, то RotL - это сдвиг данного списка влево.
--- аналогично с RotR.
-
-*NDActionHandlers> aPrint  x
-"[NDTYPEb True,NDTYPEd 8.0,NDTYPEi 7]"
-
-*NDActionHandlers> aPrint $ aRotL x
-"[NDTYPEd 8.0,NDTYPEi 7,NDTYPEb True]"
-
-*NDActionHandlers> aPrint $ aRotR x
-"[NDTYPEi 7,NDTYPEb True,NDTYPEd 8.0]"
-
-*NDActionHandlers> aPrint [NDTYPEs "hello, ", NDTYPEs "9.!"]
-"[NDTYPEs \"9.!\",NDTYPEs \"hello, \"]"
-*NDActionHandlers> aPrint $ aConcat [NDTYPEs "hello, ", NDTYPEs "9.!"]
-"[NDTYPEs \"9.!hello, \"]"
-
-*NDActionHandlers> aPop x
-[NDTYPEd 8.0,NDTYPEb True]
-
+	- все бинарные операции  инвертируются на стеке
 -}
 --------------------------------------------------------------------------------
  {-
@@ -59,32 +29,35 @@ usage:  - все функции начинаются с префикса a - act
 
  {-дублирование последнего элемента на стеке-}
  aDup :: [NDTYPE] -> [NDTYPE]
- aDup [] = error "DataStack Error : in Dup. Empty Stack." 
+ aDup [] = error "DataStack Error : in Dup. Empty stack." 
  aDup  (h:t) = h:h:t
  
  aPop :: [NDTYPE] -> [NDTYPE] 
- aPop [] = error "DataStack Error : in Pop. Empty Stack."
+ aPop [] = error "DataStack Error : in Pop. Empty stack."
  aPop (h:t) = t
 
  aRotR :: [NDTYPE] -> [NDTYPE]
- aRotR [] = error "DataStack Error : in RotR. Empty Stack."
+ aRotR [] = error "DataStack Error : in RotR. Empty stack."
  aRotR (h:t) = t ++ [h]
 
  aRotL :: [NDTYPE] -> [NDTYPE] 
- aRotL [] = error "DataStack Error : in RotL. Empty Stack."
+ aRotL [] = error "DataStack Error : in RotL. Empty stack."
  aRotL  stack = (last stack):(init stack)  
 
  aSwap :: [NDTYPE] -> [NDTYPE] 
- aSwap [] = error "DataStack Error : in Swap. Empty Stack."
- aSwap [x] = error "DataStack Error : in Swap. Not enough elements."
  aSwap (x:y:t) = y:x:t
+ aSwap stack = error "DataStack Error : in Swap. Too few elements."
+
+ aDSwap :: [NDTYPE] -> [NDTYPE] 
+ aDSwap (a:b:c:d:t) = (c:d:a:b:t)
+ aDSwap stack = error "DataStack Error : in DSwap. Too few elements."
 
  aTop :: [NDTYPE] -> String
  aTop [] =  error "DataStack Error : in Top. Empty Stack."
  aTop stack = show $ (!!0) stack
 
  aPrint :: [NDTYPE] -> String
- aPrint = show.reverse
+ aPrint = show
 
 --------------------------------------------------------------------------------
  {-  
@@ -93,13 +66,15 @@ usage:  - все функции начинаются с префикса a - act
 --------------------------------------------------------------------------------
 
  aDiv :: [NDTYPE] -> [NDTYPE]
- aDiv ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEi (div x y):t)
- aDiv stack = error "DataStack Error : In DivI. Incompatible types" 
-
+ aDiv ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEi (div y x):t)
+ aDiv stack = if ((length stack) >= 2) 
+ 	then error "DataStack Error : In Div. Incompatible types" 
+ 	else error "DataStack Error : In Div. Not enough elements."
  aMod :: [NDTYPE] -> [NDTYPE]
- aMod ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEi (mod x y):t)
- aMod stack = error "DataStack Error : In Mod. Incompatible types" 
-
+ aMod ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEi (mod y x):t)
+ aMod stack = if ((length stack) >= 2) 
+ 	then error "DataStack Error : In Mod. Incompatible types" 
+ 	else error "DataStack Error : In Mod. Not enough elements."
 
 --------------------------------------------------------------------------------
 {-
@@ -112,24 +87,26 @@ usage:  - все функции начинаются с префикса a - act
  castToDouble f (NDTYPEi x) (NDTYPEd y) = NDTYPEd (f (read (show x)::Double) y)
  castToDouble f (NDTYPEd x) (NDTYPEi y) = NDTYPEd (f x (read (show y)::Double))
  castToDouble f (NDTYPEd x) (NDTYPEd y) = NDTYPEd (f x y)
- castToDouble f x y = error "DataStack Error : Incompatible iypes (should be - Double | Int)" 
+ castToDouble f x y = error "DataStack Error : in castToDouble. Incompatible types (expected: Double | Int)." 
  
  aAdd :: [NDTYPE] -> [NDTYPE]
- aAdd ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((+) x y)):t)
- aAdd (x:y:t) = (castToDouble (+) x y) : t
+ aAdd ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((+) y x)):t)
+ aAdd (x:y:t) = (castToDouble (+) y x) : t
+ aAdd stack = error "DataStack Error : in Add. Too few elements."
  
  aSub :: [NDTYPE] -> [NDTYPE]
- aSub ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((-)x y)):t)
- aSub (x:y:t) = (castToDouble (-) x y) : t
-
+ aSub ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((-)y x)):t)
+ aSub (x:y:t) = (castToDouble (-) y x) : t
+ aSub stack = error "DataStack Error : in Sub. Too few elements."
 
  aMul :: [NDTYPE] -> [NDTYPE]
- aMul ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((*)x y)):t)
- aMul (x:y:t) = (castToDouble (*) x y) : t
-
+ aMul ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((*)y x)):t)
+ aMul (x:y:t) = (castToDouble (*) y x) : t
+ aMul stack = error "DataStack Error : in Mul. Too few elements."
  
  aDivD :: [NDTYPE] -> [NDTYPE]
- aDivD (x:y:t) = (castToDouble (/) x y) : t
+ aDivD (x:y:t) = (castToDouble (/) y x) : t
+ aDivD stack = error "DataStack Error : in DivD. Too few elements."
 
 --------------------------------------------------------------------------------
  {- 
@@ -142,8 +119,9 @@ usage:  - все функции начинаются с префикса a - act
  aConcat ((NDTYPEs x):(NDTYPEc y):t) = (NDTYPEs ([y] ++ x)):t
  aConcat ((NDTYPEc x):(NDTYPEs y):t) = (NDTYPEs (y ++ [x])):t
  aConcat ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEs ([y] ++ [x])):t
- aConcat stack = error "DataStack Error : Incompatible iypes (should be - Char | String)" 
-
+ aConcat stack = if ((length stack) >= 2) 
+ 					then error "DataStack Error : in Concat. Incompatible types (expected: Char | String)." 
+ 					else error "DataStack Error : in Concat. Too few elements." 
   -------------------------------------------------------------------------------
  {-
     5. функции, возвращающие значетие типа Bool
@@ -157,47 +135,97 @@ usage:  - все функции начинаются с префикса a - act
 
  aNot :: [NDTYPE] -> [NDTYPE]	
  aNot ((NDTYPEb x):t) = (NDTYPEb (not x)):t
- aNot stack = error "DataStack Error : in Not. Incomparable types"
+ aNot stack = if ((length stack) >= 1) 
+ 					then error "DataStack Error : in Not. Incompatible types (expected: Bool)." 
+ 					else error "DataStack Error : in Not. Too few elements." 
 
  aAnd :: [NDTYPE] -> [NDTYPE]	
- aAnd ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((&&) x y)):t
- aAnd stack = error "DataStack Error : in And. Incomparable types"
+ aAnd ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((&&) y x)):t
+ aAnd stack = if ((length stack) >= 1) 
+ 					then error "DataStack Error : in And. Incompatible types (expected: Bool)." 
+ 					else error "DataStack Error : in And. Too few elements."
 
  aOr :: [NDTYPE] -> [NDTYPE]	
- aOr ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((||) x y)):t
- aOr stack = error "DataStack Error : in Or. Incomparable types"
+ aOr ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((||) y x)):t
+ aOr stack = if ((length stack) >= 1) 
+ 					then error "DataStack Error : in Or. Incompatible types (expected: Bool)." 
+ 					else error "DataStack Error : in Or. Too few elements."
 
  aXor :: [NDTYPE] -> [NDTYPE]	
- aXor ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((/=) x y)):t
- aXor stack = error "DataStack Error : in Xor. Incomparable types"
+ aXor ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((/=) y x)):t
+ aXor stack = if ((length stack) >= 1) 
+ 					then error "DataStack Error : in Xor. Incompatible types (expected: Bool)." 
+ 					else error "DataStack Error : in Xor. Too few elements."
 
  aE :: [NDTYPE] -> [NDTYPE]	
- aE ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((==) x y)):t
- aE ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((==) (read (show x)::Double) y)):t
- aE ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((==) x (read (show y)::Double))):t
- aE ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((==) x y)):t
- aE ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((==) x y)):t
- aE ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((==) x y)):t
- aE ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((==) x y)):t
- aE stack = error "DataStack Error : in E. Incomparable types"
+ aE ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((==) y x)):t
+ aE ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((==) y (read (show x)::Double))):t
+ aE ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((==) (read (show y)::Double) x)):t
+ aE ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((==) y x)):t
+ aE ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((==) y x)):t
+ aE ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((==) y x)):t
+ aE ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((==) y x)):t
+ aE stack = if (length stack >= 2) 
+ 				then error "DataStack Error : in E. Incompatible types."
+ 				else error "DataStack Error : in E. Too few elements."
+
+ aNE :: [NDTYPE] -> [NDTYPE]	
+ aNE ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((/=) y x)):t
+ aNE ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((/=) y (read (show x)::Double))):t
+ aNE ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((/=) (read (show y)::Double) x)):t
+ aNE ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((/=) y x)):t
+ aNE ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((/=) y x)):t
+ aNE ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((/=) y x)):t
+ aNE ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((/=) y x)):t
+ aNE stack = if (length stack >= 2) 
+ 				then error "DataStack Error : in NE. Incompatible types."
+ 				else error "DataStack Error : in NE. Too few elements."
 
 
  aGT :: [NDTYPE] -> [NDTYPE]	
- aGT ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((>) x y)):t
- aGT ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((>) (read (show x)::Double) y)):t
- aGT ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((>) x (read (show y)::Double))):t
- aGT ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((>) x y)):t
- aGT ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((>) x y)):t
- aGT ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((>) x y)):t
- aGT ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((>) x y)):t
- aGT stack = error "DataStack Error : in GT. Incomparable types"
+ aGT ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((>) y x)):t
+ aGT ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((>) y (read (show x)::Double))):t
+ aGT ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((>) (read (show y)::Double) x)):t
+ aGT ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((>) y x)):t
+ aGT ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((>) y x)):t
+ aGT ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((>) y x)):t
+ aGT ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((>) y x)):t
+ aGT stack = if (length stack >= 2) 
+ 				then error "DataStack Error : in GT. Incompatible types."
+ 				else error "DataStack Error : in GT. Too few elements."
 
  aLT :: [NDTYPE] -> [NDTYPE]	
- aLT ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((<) x y)):t
- aLT ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((<) (read (show x)::Double) y)):t
- aLT ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((<) x (read (show y)::Double))):t
- aLT ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((<) x y)):t
- aLT ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((<) x y)):t
- aLT ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((<) x y)):t
- aLT ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((<) x y)):t
- aLT stack = error "DataStack Error : in LT. Incomparable types"
+ aLT ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((<) y x)):t
+ aLT ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((<) y (read (show x)::Double))):t
+ aLT ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((<) (read (show y)::Double) x)):t
+ aLT ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((<) y x)):t
+ aLT ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((<) y x)):t
+ aLT ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((<) y x)):t
+ aLT ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((<) y x)):t
+ aLT stack = if (length stack >= 2) 
+ 				then error "DataStack Error : in LT. Incompatible types"
+ 				else error "DataStack Error : in LT. Too few elements."
+
+ aGE :: [NDTYPE] -> [NDTYPE]	
+ aGE ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((>=) y x)):t
+ aGE ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((>=) y (read (show x)::Double))):t
+ aGE ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((>=) (read (show y)::Double) x)):t
+ aGE ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((>=) y x)):t
+ aGE ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((>=) y x)):t
+ aGE ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((>=) y x)):t
+ aGE ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((>=) y x)):t
+ aGE stack = if (length stack >= 2) 
+ 				then error "DataStack Error : in GE. Incompatible types"
+ 				else error "DataStack Error : in GE. Too few elements."
+
+ aLE :: [NDTYPE] -> [NDTYPE]	
+ aLE ((NDTYPEi x):(NDTYPEi y):t) = (NDTYPEb ((<=) y x)):t
+ aLE ((NDTYPEi x):(NDTYPEd y):t) = (NDTYPEb ((<=) y (read (show x)::Double))):t
+ aLE ((NDTYPEd x):(NDTYPEi y):t) = (NDTYPEb ((<=) (read (show y)::Double) x)):t
+ aLE ((NDTYPEd x):(NDTYPEd y):t) = (NDTYPEb ((<=) y x)):t
+ aLE ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((<=) y x)):t
+ aLE ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((<=) y x)):t
+ aLE ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((<=) y x)):t
+ aLE stack = if (length stack >= 2) 
+ 				then error "DataStack Error : in LE. Incompatible types"
+ 				else error "DataStack Error : in LE. Too few elements."
