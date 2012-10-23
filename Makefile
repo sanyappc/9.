@@ -14,5 +14,5 @@ all:
 	find . -name '*.hs.*' -delete
 	find . -name '*.o' -delete
 	find . -name '*.hs~' -delete
-#	rm -f ./bin/$(EXECUTABLE)
-#
+clean:	
+	rm -rf ./bin
