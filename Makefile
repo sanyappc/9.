@@ -8,9 +8,11 @@ TARGET = main.hs
 
 all:
 	$(CC) $(CFLAGS) $(MODULES) ./$(TARGET) -o $(EXECUTABLE)
+	if [ ! -d bin ] ; then mkdir ./bin ; fi 
 	mv $(EXECUTABLE) ./bin/
 	find . -name '*.hi' -delete
 	find . -name '*.hs.*' -delete
 	find . -name '*.o' -delete
 	find . -name '*.hs~' -delete
 #	rm -f ./bin/$(EXECUTABLE)
+#
