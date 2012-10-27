@@ -39,6 +39,8 @@ data NDAction = NDPush NDTYPE
 	|NDIf [NDAction] [NDAction]			-- условие NDIf [При True] [При False]
 	|NDNewFunction String [NDAction]	-- объявление функции
 	|NDCallFunction String				-- вызов функции
+	|NDSCallFunction					-- вызов функции с вершины стека
+	|NDSPutFunction String				-- кладём на стек функцию.
 	|NDExit         -- выход из п/программы, т.е. функции
 	|NDCat
 	deriving (Show, Read)

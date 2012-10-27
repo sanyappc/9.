@@ -14,6 +14,7 @@ data NDTYPE = NDTYPEi Integer
 	|NDTYPEc Char
 	|NDTYPEs String
 	|NDTYPEb Bool
+	|NDFUNC String
 	deriving (Show, Read)
 --------------------------------------------------------------------------------
 
