@@ -39,6 +39,7 @@ loop prog str = execute (parser str) prog
 execute::[NDAction] -> Program -> Program
 
 execute [] prog = prog
+execute (NDExit:xs) prog = prog
 execute (x:xs) prog = execute xs (doNDAction x prog)
 ------------------------------------------------------------------------
 {- Execution of single NDAction -}
@@ -78,6 +79,7 @@ doNDAction (NDNewFunction name acts) prog
 doNDAction (NDCallFunction name) prog
 	| member name (funcs prog) = execute (actions ((funcs prog) ! name)) prog
 	| otherwise = error $"Input Error : Function " ++ name ++ " was not declared."
+doNDAction NDExit prog = prog
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
 ------------------------------------------------------------------------
