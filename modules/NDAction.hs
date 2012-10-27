@@ -40,6 +40,7 @@ data NDAction = NDPush NDTYPE
 	|NDNewFunction String [NDAction]	-- объявление функции
 	|NDCallFunction String				-- вызов функции
 	|NDExit         -- выход из п/программы, т.е. функции
+	|NDCat
 	deriving (Show, Read)
 -------------------------------------------------------------------------------
 

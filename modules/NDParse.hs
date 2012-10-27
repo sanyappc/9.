@@ -63,6 +63,7 @@ actions =  do
                   try pxor <|>
                   try ptop <|> 
                   try pprint <|> 
+                  try pcat <|>
                   try pexit <|> 
                   try pnewf <|> pcondition
            return tmp
@@ -84,11 +85,11 @@ pswap = do
         return NDSwap 
 protr :: Parser NDAction
 protr = do
-        string "rotr"
+        string "rotr" <|> string "->"
         return NDRotR
 protl :: Parser NDAction
 protl = do
-        string "rotl"
+        string "rotl" <|> string "<-"
         skip1
         return NDRotL
 pdup :: Parser NDAction
@@ -185,6 +186,11 @@ pprint = do
          char '?'
          skip1
          return PRINT
+pcat :: Parser NDAction
+pcat = do
+       string "9."
+       skip1
+       return NDCat
 pexit :: Parser NDAction
 pexit = do
         string "exit"
