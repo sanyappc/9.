@@ -80,6 +80,8 @@ doNDAction (NDCallFunction name) prog
 	| member name (funcs prog) = execute (actions ((funcs prog) ! name)) prog
 	| otherwise = error $"Input Error : Function " ++ name ++ " was not declared."
 doNDAction NDExit prog = prog
+doNDAction (NDSPutFunction name) prog = prog{stack = (NDFUNC name):(stack prog)}
+-- doNDAction NDSCallFunction prog
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
 ------------------------------------------------------------------------
