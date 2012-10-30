@@ -44,5 +44,3 @@ data NDAction = NDPush NDTYPE
 	|NDCat
 	deriving (Show, Read)
 -------------------------------------------------------------------------------
-
-

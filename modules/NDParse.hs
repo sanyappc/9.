@@ -28,7 +28,7 @@ parser' = do
 skipper :: Parser NDAction
 skipper = do
           tmp <- try actions <|> 
-                 try types <|> pcallf
+                 try types <|> ppushf
           skip
           return tmp 
 types :: Parser NDAction
@@ -65,9 +65,11 @@ actions =  do
                   try pprint <|> 
                   try pcat <|>
                   try pexit <|> 
+                  try pscallf <|>
+                  try pcallf <|>
                   try pnewf <|> pcondition
            return tmp
--- Actions - begin
+-- Simple actions - begin
 ppop :: Parser NDAction
 ppop =  do
         string "pop"
@@ -191,12 +193,7 @@ pcat = do
        string "9."
        skip1
        return NDCat
-pexit :: Parser NDAction
-pexit = do
-        string "exit"
-        skip1
-        return NDExit
--- Actions - end  
+-- Simple actions - end  
 -- Types - begin     
 pbool :: Parser NDAction
 pbool = do
@@ -277,19 +274,35 @@ pcondition = do
              return (NDIf pthen pelse)
 -- IF statement - end
 -- functions - begin
+pexit :: Parser NDAction
+pexit = do
+        string "exit"
+        skip1
+        return NDExit
+pscallf :: Parser NDAction
+pscallf = do
+         string "@"
+         skip1
+         return NDSCallFunction
+pcallf :: Parser NDAction
+pcallf = do
+         string "@"
+         tmp <- many1 $ noneOf skipstring
+         return (NDCallFunction (NDTYPEf tmp))
 pnewf :: Parser NDAction
 pnewf = do
         char '.'
-        tmp1 <- many1 $ noneOf " \n\r\t"
+        tmp1 <- many1 $ noneOf skipstring
         skip1
         skip
         tmp2 <- manyTill skipper (char '#')
-        return (NDNewFunction tmp1 tmp2)
-pcallf :: Parser NDAction
-pcallf = do
-         tmp <- many1 $ noneOf " \n\r\t"
+        return (NDNewFunction (NDTYPEf tmp1) tmp2)
+ppushf :: Parser NDAction
+ppushf = do
+         tmp <- many1 $ noneOf skipstring
          skip1
-         return (NDCallFunction tmp)
+         return (NDPush (NDTYPEf tmp))
 -- functions - end
 skip = skipMany ( space <|> newline <|> tab ) 
 skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
+skipstring = " \n\r\t\v\f"
