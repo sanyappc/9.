@@ -9,12 +9,13 @@ module NDType where
 --------------------------------------------------------------------------------
 {- Описание типов нашего языка -}
 --------------------------------------------------------------------------------
-data NDTYPE = NDTYPEi Integer
+data NDTYPE =
+	 NDTYPEi Integer
 	|NDTYPEd Double
 	|NDTYPEc Char
 	|NDTYPEs String
 	|NDTYPEb Bool
-	|NDFUNC String
+	|NDTYPEf String
 	deriving (Show, Read)
 --------------------------------------------------------------------------------
 
