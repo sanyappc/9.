@@ -79,11 +79,16 @@ doNDAction (NDCallFunction (NDTYPEf name)) prog
 	| member name (funcs prog) = execute (actions ((funcs prog) ! name)) prog
 	| otherwise = error $"Input Error : Function " ++ name ++ " was not declared."
 doNDAction NDExit prog = prog
--- doNDAction (NDSPutFunction name) prog = prog{stack = (NDFUNC name):(stack prog)}
--- doNDAction NDSCallFunction prog
+doNDAction NDSCallFunction Program{stack = (x:xs), funcs = f}  
+	| isFunc x =  doNDAction (NDCallFunction x) Program{stack = xs, funcs = f}
+	| otherwise = error "DataStack Error : calling function from stack. Incompatible type (expected: NDTYPEf)."
+
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
 ------------------------------------------------------------------------
+isFunc (NDTYPEf func) = True
+isFunc _ = False
+
 toBool::NDTYPE -> Bool
 toBool (NDTYPEb True) = True
 toBool (NDTYPEb False) = False
