@@ -61,8 +61,6 @@ actions =  do
                   try pand <|> 
                   try por <|> 
                   try pxor <|>
-                  try ptop <|> 
-                  try pprint <|> 
                   try pcat <|>
                   try pexit <|> 
                   try pscallf <|>
@@ -178,16 +176,6 @@ pxor = do
        string "xor"
        skip1
        return XOR
-ptop :: Parser NDAction
-ptop = do
-       char '@'
-       skip1
-       return TOP
-pprint :: Parser NDAction
-pprint = do
-         char '?'
-         skip1
-         return PRINT
 pcat :: Parser NDAction
 pcat = do
        string "9."
