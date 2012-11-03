@@ -27,8 +27,7 @@ parser' = do
           return tmp
 skipper :: Parser NDAction
 skipper = do
-          tmp <- try actions <|> 
-                 try types <|> ppushf
+          tmp <- try actions <|> types
           skip
           return tmp 
 types :: Parser NDAction
@@ -63,6 +62,7 @@ actions =  do
                   try pxor <|>
                   try pcat <|>
                   try pexit <|> 
+                  try ppushf <|>
                   try pscallf <|>
                   try pcallf <|>
                   try pnewf <|> pcondition
@@ -269,12 +269,12 @@ pexit = do
         return NDExit
 pscallf :: Parser NDAction
 pscallf = do
-         string "@"
+         char '@'
          skip1
          return NDSCallFunction
 pcallf :: Parser NDAction
 pcallf = do
-         string "@"
+         char '@'
          tmp <- many1 $ noneOf skipstring
          return (NDCallFunction (NDTYPEf tmp))
 pnewf :: Parser NDAction
@@ -287,6 +287,7 @@ pnewf = do
         return (NDNewFunction (NDTYPEf tmp1) tmp2)
 ppushf :: Parser NDAction
 ppushf = do
+         char '%'
          tmp <- many1 $ noneOf skipstring
          skip1
          return (NDPush (NDTYPEf tmp))
