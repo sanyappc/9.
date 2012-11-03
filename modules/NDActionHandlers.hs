@@ -133,10 +133,12 @@ usage:  - все функции начинаются с префикса a - act
 	возвращает значение типа Boolean
  -}
 
- aNot :: [NDTYPE] -> [NDTYPE]	
+ aNot :: [NDTYPE] -> [NDTYPE]
+ aNot ((NDTYPEi x):t) = (NDTYPEi (-x)):t -- отрицание
+ aNot ((NDTYPEd x):t) = (NDTYPEd (-x)):t	
  aNot ((NDTYPEb x):t) = (NDTYPEb (not x)):t
  aNot stack = if ((length stack) >= 1) 
- 					then error "DataStack Error : in Not. Incompatible types (expected: Bool)." 
+ 					then error "DataStack Error : in Not. Incompatible types (expected: Bool | Doble | Int)." 
  					else error "DataStack Error : in Not. Too few elements." 
 
  aAnd :: [NDTYPE] -> [NDTYPE]	
