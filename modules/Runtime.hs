@@ -49,8 +49,7 @@ doNDAction::NDAction -> Program -> Program
 doNDAction NDPop prog = prog{stack = aPop (stack prog)} 
 doNDAction (NDPush a) prog = prog{stack = aPush (stack prog) a}
 doNDAction NDSwap prog = prog{stack = aSwap (stack prog)}  
-
---doNDAction NDDSwap stack = aDSwap stack	-- Коля реализовал .
+doNDAction NDDSwap prog = prog{stack = aDSwap (stack prog)}
 doNDAction NDRotR prog = prog{stack = aRotR (stack prog)}
 doNDAction NDRotL prog = prog{stack = aRotL (stack prog)}
 doNDAction NDDup prog = prog{stack = aDup (stack prog)}
@@ -60,12 +59,12 @@ doNDAction NDMul prog = prog{stack = aMul (stack prog)}
 doNDAction DivD prog = prog{stack = aDivD (stack prog)}
 doNDAction Div prog = prog{stack = aDiv (stack prog)}
 doNDAction Mod prog = prog{stack = aMod (stack prog)}
---doNDAction GE stack = aGE stack			-- Коля реализовал .
---doNDAction LE stack = aLE stack			-- Коля реализовал .
+doNDAction GE prog = prog{stack = aGE (stack prog)}
+doNDAction LE prog = prog{stack = aLE (stack prog)}
 doNDAction G prog = prog{stack = aGT (stack prog)}
 doNDAction L prog = prog{stack = aLT (stack prog)}
 doNDAction E prog = prog{stack = aE (stack prog)}
---doNDAction NE stack = aNE stack			-- Коля реализовал .
+doNDAction NE prog = prog{stack = aNE (stack prog)}
 doNDAction NOT prog = prog{stack = aNot (stack prog)}
 doNDAction AND prog = prog{stack = aAnd (stack prog)}
 doNDAction OR prog = prog{stack = aOr (stack prog)}
@@ -73,14 +72,14 @@ doNDAction XOR prog = prog{stack = aXor (stack prog)}
 doNDAction (NDIf true false) Program{stack = (x:xs), funcs = f}
 	| toBool x = execute true Program{stack = xs, funcs = f}
 	| otherwise = execute false Program{stack = xs, funcs = f}
-doNDAction (NDNewFunction name acts) prog
+doNDAction (NDNewFunction (NDTYPEf name) acts) prog
 	| member name (funcs prog) = prog{funcs = Data.Map.adjust (\x -> Func{actions = acts}) name (funcs prog) }
 	| otherwise = prog{funcs = Data.Map.insert name Func{actions=acts} (funcs prog) }
-doNDAction (NDCallFunction name) prog
+doNDAction (NDCallFunction (NDTYPEf name)) prog
 	| member name (funcs prog) = execute (actions ((funcs prog) ! name)) prog
 	| otherwise = error $"Input Error : Function " ++ name ++ " was not declared."
 doNDAction NDExit prog = prog
-doNDAction (NDSPutFunction name) prog = prog{stack = (NDFUNC name):(stack prog)}
+-- doNDAction (NDSPutFunction name) prog = prog{stack = (NDFUNC name):(stack prog)}
 -- doNDAction NDSCallFunction prog
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
