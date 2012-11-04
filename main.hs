@@ -7,49 +7,31 @@ import NDAction
 import NDActionHandlers
 import Text.Printf 
 import Data.Map
+import System.Console.Haskeline
 
 main::IO ()
-main =	printf "Today is a good day =)\n" >>
-		mloop Program{stack = [], funcs = fromList [] } >>
-		printf "Goodbye!\n" >>
-		return ()
+
+main = runInputT defaultSettings $loop Program{stack = [], funcs = fromList []}
 	where
-	mloop prog =
-		printf ":" >>
-		getLine >>=
-		(\t -> handle prog t) >>=
-		mloop
-	{- старая версия повесит по принципу трёх обновлений.
-	mloop prog = do
-		printf ":"
-		input <- getLine
-		if input == ":q"
-		then
-			return ()
-		else
-			mread prog input >>=
-			(\t -> print (stack t) >> mloop t) 
-	-}	
-
-	mread::Program -> String -> IO Program
-	mread stack input =
-			return $execute (parser input) stack
-
-	------------------------------------------------------------------------------
-	-- handle func
-	------------------------------------------------------------------------------
-	handle::Program -> String -> IO Program
-	handle prog ":q" = error "Покедова!"
-	-- сделать нормальный парсер файлов надо.
-	handle prog ":l" =
-		printf ":" >>
-		getLine >>=
-		readFile >>=
-		exec
-		where
-			exec input =
-				 mread prog input >>=
-				 (\t -> print (stack t) >> return t)
-	handle prog input = 
-		mread prog input >>= 
-            (\t -> print (stack t) >> return t)
+		loop::Program -> InputT IO()
+		loop prog  = do
+			input <- getInputLine "9.: "
+			case input of
+				Nothing -> return ()
+				Just "quit" ->	outputStrLn "9.: Good bye!!!!"
+				Just "load" ->	getInputLine "9.:loading " >>=  
+								(\(Just t) -> return (words t)) >>=
+								(\t -> return $load prog t ) >>=
+								(\t -> (outputStrLn $show (stack t)) >> loop t )
+				Just input ->	return (execute (parser input) prog) >>= 
+					 			(\t -> (outputStrLn $show (stack t)) >> loop t )
+{-
+		load::Program -> [String] -> IO Program
+		load prog [] = return prog
+		load prog (x:xs) =	readFile x >>=
+							(\t -> return $execute (parser t) prog) >>=
+							(\t -> load t xs)
+-}
+		load::Program -> [String] -> Program
+		load prog [] = prog
+		load prog (x:xs) = load (execute (fparser x) prog) xs

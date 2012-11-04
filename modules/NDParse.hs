@@ -3,7 +3,7 @@
  - Description : Модуль для парсинга.
  - Stability : experimental
 -}
-module NDParse(parser) where
+module NDParse(parser, fparser) where
 
 import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
                                        try, eof, string, char,
@@ -15,6 +15,10 @@ import Text.Parsec.Prim (parsecMap)
 
 import NDType
 import NDAction
+
+-- заглушку поставил
+fparser :: String -> [NDAction]
+fparser string = parser string
 
 parser :: String -> [NDAction]
 parser string = case ( parse parser' "" string ) of
