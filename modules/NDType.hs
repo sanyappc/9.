@@ -6,9 +6,9 @@
 
 module NDType where
 
---------------------------------------------------------------------------------
+------------------------------------------------------------------------
 {- Описание типов нашего языка -}
---------------------------------------------------------------------------------
+------------------------------------------------------------------------
 data NDTYPE =
 	 NDTYPEi Integer
 	|NDTYPEd Double
@@ -16,17 +16,35 @@ data NDTYPE =
 	|NDTYPEs String
 	|NDTYPEb Bool
 	|NDTYPEf String
-	deriving (Show, Read)
---------------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Замена стандартного show для нормального отображения 
+-- кириллицы на стеке
+------------------------------------------------------------------------
+showNew [] = "[]"
+showNew (a:[]) = "["++(showType a)++"]"
+showNew a = showLoop a "["
 
-{-
- - Usage example...
-main::IO ()
+showLoop (a:[]) string = string ++ (showType a) ++ "]"
+showLoop (a:b) string = showLoop b (string++(showType a)++",") 
 
-main = print (func (NDTYPEi 10)) >> print (func (NDTYPEd 10.0))
+showType (NDTYPEi a) = "NDTYPEi "++show a
+showType (NDTYPEd a) = "NDTYPEd "++show a
+showType (NDTYPEc a) = "NDTYPEc '"++(replaceChar a)++"'"
+showType (NDTYPEs a) = "NDTYPEs \""++(replaceString a [])++"\""
+showType (NDTYPEb a) = "NDTYPEb "++show a
+showType (NDTYPEf a) = "NDTYPEf "++ a
+-- showType NDTYPErr a = error "It's impossible!" 
+-- showType _ = error "It's impossible!"
 
-func::NDTYPE -> Int
-
-func (NDTYPEi a) = a::Int
-func (NDTYPEd a) = 100
--}
+replaceString [] c = c
+replaceString (a:b) c = replaceString b (c++(replaceChar a))
+replaceChar a = case a of
+                     '\\' -> "\\\\"
+                     '\n' -> "\\n"
+                     '\r' -> "\\r"
+                     '\t' -> "\\t"
+                     '\v' -> "\\v"
+                     '\f' -> "\\f"
+                     '\"' -> "\\\""
+                     '\'' -> "\\\'"
+                     _ -> [a]

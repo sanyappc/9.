@@ -3,7 +3,7 @@
  - Description : Модуль для парсинга.
  - Stability : experimental
 -}
-module NDParse(parser, fparser) where
+module NDParse(parser) where
 
 import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
                                        try, eof, string, char,
@@ -15,10 +15,6 @@ import Text.Parsec.Prim (parsecMap)
 
 import NDType
 import NDAction
-
--- заглушку поставил
-fparser :: String -> [NDAction]
-fparser string = parser string
 
 parser :: String -> [NDAction]
 parser string = case ( parse parser' "" string ) of
@@ -208,10 +204,15 @@ pint i = return (NDPush (NDTYPEi ( read i :: Integer )))
 pchar :: Parser NDAction
 pchar = do
         char '\''
-        tmp <- anyChar
+        tmp <- try pchar' <|> anyChar
         char '\''
         skip1
         return (NDPush (NDTYPEc tmp))
+pchar' :: Parser Char
+pchar' = do
+         char '\\'
+         tmp <- try pstring1 <|> pstring2
+         return tmp
 pstring :: Parser NDAction
 pstring = do
           char '"'
@@ -223,27 +224,38 @@ pstring' :: Parser String
 pstring' = do
            char '\\'
            tmp <- try pstring1 <|> pstring2
-           return tmp
-pstring1 :: Parser String
-pstring1 = do
-           tmp <- char '\\' <|> char '\"'
            return [tmp]
-pstring2 :: Parser String
-pstring2 = do
-           tmp <- try pstring2N <|> try pstring2R <|> pstring2T
+pstring1 :: Parser Char
+pstring1 = do
+           tmp <- char '\\' <|> char '\"' <|> char '\''
            return tmp
-pstring2N :: Parser String
+pstring2 :: Parser Char
+pstring2 = do
+           tmp <- try pstring2N <|> 
+                  try pstring2R <|> 
+                  try pstring2T <|> 
+                  try pstring2V <|> pstring2F
+           return tmp
+pstring2N :: Parser Char
 pstring2N = do
             char 'n'
-            return "\n"
-pstring2R :: Parser String
+            return '\n'
+pstring2R :: Parser Char
 pstring2R = do
             char 'r'
-            return "\r"
-pstring2T :: Parser String
+            return '\r'
+pstring2T :: Parser Char
 pstring2T = do
             char 't'
-            return "\t"
+            return '\t'
+pstring2V :: Parser Char
+pstring2V = do
+            char 'v'
+            return '\v'
+pstring2F :: Parser Char
+pstring2F = do
+            char 'f'
+            return '\f'
 -- Types - end   
 -- IF statement - begin
 parserelse :: Parser [NDAction]

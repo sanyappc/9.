@@ -24,9 +24,9 @@ main = runInputT defaultSettings $loop Program{stack = [], funcs = fromList []}
 								(\(Just t) -> return (words t)) >>=
 								(\t -> return $load prog t ) >>=
 								(\t -> liftIO t) >>=
-								(\t -> (outputStrLn $show (stack t)) >> loop t )
+								(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 				Just input ->	return (execute (parser input) prog) >>= 
-					 			(\t -> (outputStrLn $show (stack t)) >> loop t )
+					 			(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 
 		load::Program -> [String] -> IO Program
 		load prog [] = return prog

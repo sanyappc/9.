@@ -52,13 +52,6 @@ usage:  - все функции начинаются с префикса a - act
  aDSwap (a:b:c:d:t) = (c:d:a:b:t)
  aDSwap stack = error "DataStack Error : in DSwap. Too few elements."
 
- aTop :: [NDTYPE] -> String
- aTop [] =  error "DataStack Error : in Top. Empty Stack."
- aTop stack = show $ (!!0) stack
-
- aPrint :: [NDTYPE] -> String
- aPrint = show
-
 --------------------------------------------------------------------------------
  {-  
 	2. Функции, возвращающищие значения типа Int 
