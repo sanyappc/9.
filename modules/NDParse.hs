@@ -18,7 +18,7 @@ import NDAction
 
 parser :: String -> [NDAction]
 parser string = case ( parse parser' "" string ) of
-                     Left err -> error $ showErrorMessages "or" "unknown error" "expecting:" "unexpected:" "end of input" ( errorMessages err )
+                     Left err -> [NDPush (NDTYPErr (showErrorMessages "or" "unknown error" "expecting:" "unexpected:" "end of input" ( errorMessages err )))]
                      Right xs -> xs
 parser' :: Parser [NDAction]
 parser' = do
