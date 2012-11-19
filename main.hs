@@ -15,7 +15,8 @@ main::IO ()
 main = runInputT defaultSettings $loop Program{stack = [], funcs = fromList []}
 	where
 		loop::Program -> InputT IO()
-		loop Program{stack = ((NDTYPErr err):xs), funcs = f } = outputStrLn err
+		loop Program{stack = ((NDTYPErr err):xs), funcs = f } = outputStrLn err >> 
+			loop Program{stack = xs, funcs = f}
 		loop prog  = do
 			outputStrLn $ showNew (stack prog)
 			input <- getInputLine "9.: "
