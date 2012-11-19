@@ -15,7 +15,9 @@ main::IO ()
 main = runInputT defaultSettings $loop Program{stack = [], funcs = fromList []}
 	where
 		loop::Program -> InputT IO()
+		loop Program{stack = ((NDTYPErr err):xs), funcs = f } = outputStrLn err
 		loop prog  = do
+			outputStrLn $ showNew (stack prog)
 			input <- getInputLine "9.: "
 			case input of
 				Nothing -> return ()
@@ -24,9 +26,11 @@ main = runInputT defaultSettings $loop Program{stack = [], funcs = fromList []}
 								(\(Just t) -> return (words t)) >>=
 								(\t -> return $load prog t ) >>=
 								(\t -> liftIO t) >>=
-								(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
+								loop
+--								(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 				Just input ->	return (execute (parser input) prog) >>= 
-					 			(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
+								loop
+--					 			(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 
 		load::Program -> [String] -> IO Program
 		load prog [] = return prog

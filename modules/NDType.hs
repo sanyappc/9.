@@ -34,8 +34,8 @@ showType (NDTYPEc a) = "NDTYPEc '"++(replaceChar a)++"'"
 showType (NDTYPEs a) = "NDTYPEs \""++(replaceString a [])++"\""
 showType (NDTYPEb a) = "NDTYPEb "++show a
 showType (NDTYPEf a) = "NDTYPEf "++ a
--- showType NDTYPErr a = error "It's impossible!" 
--- showType _ = error "It's impossible!"
+showType (NDTYPErr a) = error "It's impossible!" 
+--showType _ = error "It's impossible!"
 
 replaceString [] c = c
 replaceString (a:b) c = replaceString b (c++(replaceChar a))

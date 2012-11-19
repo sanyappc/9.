@@ -10,7 +10,6 @@ import NDType
 import NDParse
 import NDAction
 import NDActionHandlers
-
 import Text.Printf
 import Data.Map
 {- Read about maps: http://book.realworldhaskell.org/read/data-structures.html -}
@@ -38,6 +37,7 @@ loop prog str = execute (parser str) prog
 ------------------------------------------------------------------------
 execute::[NDAction] -> Program -> Program
 
+execute x Program{stack = (NDTYPErr err:xs), funcs = f} = Program{stack = (NDTYPErr err:xs), funcs = f}
 execute [] prog = prog
 execute (NDExit:xs) prog = prog
 execute (x:xs) prog = execute xs (doNDAction x prog)
@@ -81,7 +81,8 @@ doNDAction (NDCallFunction (NDTYPEf name)) prog
 doNDAction NDExit prog = prog
 doNDAction NDSCallFunction Program{stack = (x:xs), funcs = f}  
 	| isFunc x =  doNDAction (NDCallFunction x) Program{stack = xs, funcs = f}
-	| otherwise = error "DataStack Error : calling function from stack. Incompatible type (expected: NDTYPEf)."
+	| otherwise = Program{stack = aPush (x:xs) (NDTYPErr "Stack Error. While trying to call function from stack, incompatible type was detected."), funcs = f}
+--	| otherwise = error "DataStack Error : calling function from stack. Incompatible type (expected: NDTYPEf)."
 
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}
