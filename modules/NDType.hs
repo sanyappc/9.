@@ -16,7 +16,7 @@ data NDTYPE =
 	|NDTYPEs String
 	|NDTYPEb Bool
 	|NDTYPEf String
-	|NDTYPEe String -- ошибки...
+	|NDTYPErr String -- ошибки...
 ------------------------------------------------------------------------
 -- Замена стандартного show для нормального отображения 
 -- кириллицы на стеке
