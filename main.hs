@@ -22,10 +22,10 @@ main = runInputT defaultSettings $loop Program{stack = [], funcs = fromList []}
 			input <- getInputLine "9.: "
 			case input of
 				Nothing -> return ()
-				Just "quit" ->	outputStrLn "9.: Good bye!!!!"
-				Just "load" ->	getInputLine "9.:loading " >>=  
-								(\(Just t) -> return (words t)) >>=
-								(\t -> return $load prog t ) >>=
+				Just "q" ->	outputStrLn "9.: Good bye!!!!"
+				Just ('l':' ':files) ->	outputStrLn "9.:loading files" >>  
+								return (words files) >>=
+								(\t -> return $ load prog t ) >>=
 								(\t -> liftIO t) >>=
 								loop
 --								(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
