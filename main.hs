@@ -29,7 +29,7 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 				Nothing -> return ()
 				Just "q" ->	outputStrLn "9.: Good bye!!!!"
 				Just ('l':' ':files) ->	
-								outputStrLn ("9.: Loading files: " ++ files) >>  
+								outputStrLn ("9.: Loading files: " ++ (unwords $ words files)) >>  
 								return (words files) >>=
 								load prog >>=
 								loop
@@ -45,7 +45,7 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 					where 
 						  handleExistance err | isDoesNotExistError err = return ""
 											  | otherwise = throwIO err
-						  handleExistance' name prog [] = outputStrLn ("File \""++name++"\" is empty or doesn't exists") >> 
+						  handleExistance' name prog [] = outputStrLn ("File \""++name++"\" is empty or doesn't exist") >> 
 														  return prog
 						  handleExistance' name prog file = outputStrLn ("Executing file \""++name++"\"") >>
 														    return (execute (parser file) prog)
