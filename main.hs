@@ -31,7 +31,7 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 				Just ('l':' ':files) ->	
 								outputStrLn ("9.: Loading files: " ++ files) >>  
 								return (words files) >>=
-								(\t -> load prog t ) >>=
+								load prog >>=
 								loop
 --								(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 				Just input ->	return (execute (parser input) prog) >>= 
