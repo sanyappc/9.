@@ -43,6 +43,8 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 --					(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 		load prog [] = 
 			return prog
+		load Program{stack = ((NDTYPErr err):xs), funcs = f } _ =
+			return Program{stack = ((NDTYPErr err):xs), funcs = f }
 		load prog (x:xs) = 
 			liftIO ( readFile x `catch` handleExistance )>>=
 			handleExistance' x prog >>=
