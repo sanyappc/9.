@@ -76,30 +76,30 @@ aMod stack = if ((length stack) >= 2)
  -} 
 --------------------------------- -----------------------------------------------
  
-castToDouble :: (Double -> Double -> Double) -> NDTYPE -> NDTYPE -> NDTYPE
-castToDouble f (NDTYPEi x) (NDTYPEi y) = NDTYPEd (f (read (show x)::Double) (read (show y)::Double))
-castToDouble f (NDTYPEi x) (NDTYPEd y) = NDTYPEd (f (read (show x)::Double) y)
-castToDouble f (NDTYPEd x) (NDTYPEi y) = NDTYPEd (f x (read (show y)::Double))
-castToDouble f (NDTYPEd x) (NDTYPEd y) = NDTYPEd (f x y)
-castToDouble f x y = NDTYPErr "DataStack Error : in castToDouble. Incompatible types (expected: Double | Int)." 
+castToDouble :: (Double -> Double -> Double) -> NDTYPE -> NDTYPE -> [NDTYPE]
+castToDouble f (NDTYPEi x) (NDTYPEi y) = [NDTYPEd (f (read (show x)::Double) (read (show y)::Double))]
+castToDouble f (NDTYPEi x) (NDTYPEd y) = [NDTYPEd (f (read (show x)::Double) y)]
+castToDouble f (NDTYPEd x) (NDTYPEi y) = [NDTYPEd (f x (read (show y)::Double))]
+castToDouble f (NDTYPEd x) (NDTYPEd y) = [NDTYPEd (f x y)]
+castToDouble f x y = [NDTYPErr "DataStack Error : in castToDouble. Incompatible types (expected: Double | Int).",y,x] 
  
 aAdd :: [NDTYPE] -> [NDTYPE]
 aAdd ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((+) y x)):t)
-aAdd (x:y:t) = (castToDouble (+) y x) : t
+aAdd (x:y:t) = (castToDouble (+) y x) ++ t
 aAdd stack = (NDTYPErr "DataStack Error : in Add. Too few elements."):stack
  
 aSub :: [NDTYPE] -> [NDTYPE]
 aSub ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((-)y x)):t)
-aSub (x:y:t) = (castToDouble (-) y x) : t
+aSub (x:y:t) = (castToDouble (-) y x) ++ t
 aSub stack = (NDTYPErr "DataStack Error : in Sub. Too few elements."):stack
 
 aMul :: [NDTYPE] -> [NDTYPE]
 aMul ((NDTYPEi x):(NDTYPEi y):t) = ((NDTYPEi((*)y x)):t)
-aMul (x:y:t) = (castToDouble (*) y x) : t
+aMul (x:y:t) = (castToDouble (*) y x) ++ t
 aMul stack = (NDTYPErr "DataStack Error : in Mul. Too few elements."):stack
  
 aDivD :: [NDTYPE] -> [NDTYPE]
-aDivD (x:y:t) = (castToDouble (/) y x) : t
+aDivD (x:y:t) = (castToDouble (/) y x) ++ t
 aDivD stack = (NDTYPErr "DataStack Error : in DivD. Too few elements."):stack
 
 --------------------------------------------------------------------------------
