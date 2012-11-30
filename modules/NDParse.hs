@@ -5,21 +5,30 @@
 -}
 module NDParse(parser) where
 
-import Text.ParserCombinators.Parsec (parse, Parser, manyTill,
+import Text.ParserCombinators.Parsec ( parse, Parser, manyTill,
                                        try, eof, string, char,
                                        digit, many, many1, anyChar,
                                        noneOf, skipMany, newline,
                                        tab, space, (<|>), lookAhead)                                     
-import Text.Parsec.Error (showErrorMessages, errorMessages)
+import Text.Parsec.Error (errorMessages, errorPos,Message(SysUnExpect),Message(UnExpect),Message(Message))
 import Text.Parsec.Prim (parsecMap)
+import Text.Parsec.Pos(sourceColumn,sourceLine)
 
 import NDType
 import NDAction
 
 parser :: String -> [NDAction]
 parser string = case ( parse parser' "" string ) of
-                     Left err -> [NDPush (NDTYPErr (showErrorMessages "or" "unknown error" "expecting:" "unexpected:" "end of input" ( errorMessages err )))]
+                     Left err -> [NDPush (NDTYPErr $  "error: line: " ++ show (sourceLine (errorPos err)) ++ " col: " ++ show (sourceColumn (errorPos err)) ++ makeErr (errorMessages err))]
                      Right xs -> xs
+makeErr ((SysUnExpect err):_) = ": unexpected input" ++ makeErr' err
+makeErr ((UnExpect err):_) = ": unexpected item" ++ makeErr' err
+makeErr ((Message err):_) = ": unknown error" ++ makeErr' err
+makeErr (_:xs) = makeErr xs
+makeErr _ = ": unknown error"
+makeErr' [] = ""
+makeErr' err = ": " ++ err
+ 
 parser' :: Parser [NDAction]
 parser' = do
           skip
