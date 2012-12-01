@@ -75,9 +75,9 @@ doNDAction (NDIf true false) Program{stack = (x:xs), funcs = f}
 doNDAction (NDNewFunction (NDTYPEf name) acts) prog
 	| member name (funcs prog) = prog{funcs = Data.Map.adjust (\x -> Func{actions = acts}) name (funcs prog) }
 	| otherwise = prog{funcs = Data.Map.insert name Func{actions=acts} (funcs prog) }
-doNDAction (NDCallFunction (NDTYPEf name)) prog
-	| member name (funcs prog) = execute (actions ((funcs prog) ! name)) prog
-	| otherwise = error $"Input Error : Function " ++ name ++ " was not declared."
+doNDAction (NDCallFunction (NDTYPEf name)) Program{stack = x, funcs = f}
+	| member name f = execute (actions (f ! name)) Program{stack = x, funcs = f}
+	| otherwise = Program{stack = aPush x (NDTYPErr ("Runtime Error. You've tried call undeclared function <" ++ name ++ ">.")), funcs = f}
 doNDAction NDExit prog = prog
 doNDAction NDSCallFunction Program{stack = (x:xs), funcs = f}  
 	| isFunc x =  doNDAction (NDCallFunction x) Program{stack = xs, funcs = f}
