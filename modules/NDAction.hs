@@ -8,7 +8,7 @@ module NDAction where
 
 import NDType
 
-data NDCoords = (Integer, Integer) (Integer, Integer)
+data NDCoords = NDCoords(Integer, Integer) (Integer, Integer)
 
 -------------------------------------------------------------------------------
 {- Тип Action предназначен для описания базовых функций нашего языка -}
