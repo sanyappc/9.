@@ -8,7 +8,7 @@ import NDActionHandlers
 import Text.Printf 
 import System.Console.Haskeline
 import Data.Map
-import Network.CGI
+import Control.Monad.IO.Class
 
 import Prelude hiding (catch)
 import System.Directory
