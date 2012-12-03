@@ -8,8 +8,7 @@ module NDAction where
 
 import NDType
 
-data NDCoords = LinePos Integer Integer
-	|FilePos (Integer, Integer) (Integer, Integer)
+data NDCoords = (Integer, Integer) (Integer, Integer)
 
 -------------------------------------------------------------------------------
 {- Тип Action предназначен для описания базовых функций нашего языка -}
