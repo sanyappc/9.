@@ -17,28 +17,38 @@ import Text.Parsec.Pos(sourceColumn,sourceLine)
 import NDType
 import NDAction
 
-parser :: String -> [NDAction]
+parser :: String -> [NDActionPos]
 parser string = case ( parse parser' "" string ) of
-                     Left err -> [NDPush (NDTYPErr $  "error: line: " ++ show (sourceLine (errorPos err)) ++ " col: " ++ show (sourceColumn (errorPos err)) ++ makeErr (errorMessages err))]
+                     -- Left err -> [NDPush (NDTYPErr $  "error: line: " ++ show (sourceLine (errorPos err)) ++ " col: " ++ show (sourceColumn (errorPos err)) ++ makeErr (errorMessages err))]
+                     Left err -> [(NDPush (NDTYPErr $  makeErr (errorMessages err))) ((sourceLine (errorPos err),sourceColumn (errorPos err)) (-1,-1))]
                      Right xs -> xs
-makeErr ((SysUnExpect err):_) = ": unexpected input" ++ makeErr' err
-makeErr ((UnExpect err):_) = ": unexpected item" ++ makeErr' err
-makeErr ((Message err):_) = ": unknown error" ++ makeErr' err
+-- makeErr ((SysUnExpect err):_) = ": unexpected input" ++ makeErr' err
+makeErr ((SysUnExpect err):_) = "unexpected input" ++ makeErr' err
+-- makeErr ((UnExpect err):_) = ": unexpected item" ++ makeErr' err
+makeErr ((UnExpect err):_) = "unexpected item" ++ makeErr' err
+-- makeErr ((Message err):_) = ": unknown error" ++ makeErr' err
+makeErr ((Message err):_) = "unknown error" ++ makeErr' err
 makeErr (_:xs) = makeErr xs
 makeErr _ = ": unknown error"
 makeErr' [] = ""
 makeErr' err = ": " ++ err
  
-parser' :: Parser [NDAction]
+parser' :: Parser [NDActionPos]
 parser' = do
           skip
           tmp <- manyTill skipper (try eof)
           return tmp
-skipper :: Parser NDAction
+skipper :: Parser NDActionPos
 skipper = do
+          start <- getPosition
+          startx <- sourceLine start
+          starty <- sourceColumn start
           tmp <- try actions <|> types
           skip
-          return tmp 
+          finish <- getPosition
+          finishx <- sourceLine finish
+          finishy <- sourceColumn finish
+          return (tmp ((startx,starty) (finishx-1,finishy-1)))
 types :: Parser NDAction
 types = do
         tmp <- try pdigits <|> 
