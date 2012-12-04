@@ -11,8 +11,8 @@ import Text.ParserCombinators.Parsec ( parse, Parser, manyTill,
                                        noneOf, skipMany, newline,
                                        tab, space, (<|>), lookAhead)                                     
 import Text.Parsec.Error (errorMessages, errorPos,Message(SysUnExpect),Message(UnExpect),Message(Message))
-import Text.Parsec.Prim (parsecMap)
-import Text.Parsec.Pos(sourceColumn,sourceLine)
+import Text.Parsec.Prim (parsecMap,getPosition)
+import Text.Parsec.Pos (sourceColumn,sourceLine)
 
 import NDType
 import NDAction
@@ -20,7 +20,7 @@ import NDAction
 parser :: String -> [NDActionPos]
 parser string = case ( parse parser' "" string ) of
                      -- Left err -> [NDPush (NDTYPErr $  "error: line: " ++ show (sourceLine (errorPos err)) ++ " col: " ++ show (sourceColumn (errorPos err)) ++ makeErr (errorMessages err))]
-                     Left err -> [(NDPush (NDTYPErr $  makeErr (errorMessages err))) ((sourceLine (errorPos err),sourceColumn (errorPos err)) (-1,-1))]
+                     Left err -> [NDActionPos (NDPush (NDTYPErr $ makeErr (errorMessages err))) (sourceLine (errorPos err)) (sourceColumn (errorPos err)) (-1) (-1)]
                      Right xs -> xs
 -- makeErr ((SysUnExpect err):_) = ": unexpected input" ++ makeErr' err
 makeErr ((SysUnExpect err):_) = "unexpected input" ++ makeErr' err
@@ -41,14 +41,10 @@ parser' = do
 skipper :: Parser NDActionPos
 skipper = do
           start <- getPosition
-          startx <- sourceLine start
-          starty <- sourceColumn start
           tmp <- try actions <|> types
           skip
           finish <- getPosition
-          finishx <- sourceLine finish
-          finishy <- sourceColumn finish
-          return (tmp ((startx,starty) (finishx-1,finishy-1)))
+          return (NDActionPos tmp (sourceLine start) (sourceColumn start) (sourceLine finish - 1) (sourceColumn finish - 1))
 types :: Parser NDAction
 types = do
         tmp <- try pdigits <|> 
@@ -277,13 +273,13 @@ pstring2F = do
             return '\f'
 -- Types - end   
 -- IF statement - begin
-parserelse :: Parser [NDAction]
+parserelse :: Parser [NDActionPos]
 parserelse = do
              string "else"
              skip1
              tmp <- manyTill skipper (try $ string "endif")
              return tmp
-parserendif :: Parser [NDAction]
+parserendif :: Parser [NDActionPos]
 parserendif = do
               string "endif"
               return []

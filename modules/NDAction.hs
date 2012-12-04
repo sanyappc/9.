@@ -41,6 +41,6 @@ data NDAction = NDPush NDTYPE		--
 	|NDExit         		-- выход из п/программы, т.е. функции
 	|NDCat
 -------------------------------------------------------------------------------
+-- NDActionPos NDAction start_line start_col end_line end_col
+data NDActionPos = NDActionPos NDAction Int Int Int Int 
 
-data NDPos = (Integer,Integer) (Integer,Integer)
-data NDActionPos = NDAction NDPos
