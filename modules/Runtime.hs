@@ -37,10 +37,28 @@ loop prog str = execute (parser str) prog
 ------------------------------------------------------------------------
 execute::[NDActionPos] -> Program -> Program
 
-execute x Program{stack = (NDTYPErr err:xs), funcs = f} = Program{stack = (NDTYPErr err:xs), funcs = f}
-execute [] prog = prog
-execute ((NDActionPos NDExit _ _ _ _):xs) prog = prog
-execute (x:xs) prog = execute xs (doNDAction x prog)
+--execute ((NDActionPos _ xx yy _ _):ss) Program{stack = (NDTYPErr err:xs), funcs = f} =
+--	Program{istack = (NDTYPErr ("Runtime error at line " ++ (show xx) ++ " and pos " ++ (show yy) ++ err):xs), funcs = f}
+
+execute _ Program{stack = (NDTYPErr err:xs), funcs = f} =
+    Program{stack = (NDTYPErr err:xs), funcs = f}
+
+execute [] prog = 
+	prog
+
+execute ((NDActionPos NDExit _ _ _ _):xs) prog = 
+	prog
+
+execute (x:xs) prog =
+	execute xs (check x (doNDAction x prog))
+--	execute xs (doNDAction x prog)
+
+check::NDActionPos -> Program -> Program
+check (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
+	Program{stack = (NDTYPErr ("error: line " ++ (show xx) ++ ": pos " ++ (show yy) ++ ": " ++ err):xs), funcs = f}
+
+check _ prog = prog
+
 ------------------------------------------------------------------------
 {- Execution of single NDAction -}
 ------------------------------------------------------------------------
@@ -123,16 +141,16 @@ doNDAction (NDActionPos (NDNewFunction (NDTYPEf name) acts) _ _ _ _) prog
 	| member name (funcs prog) = prog{funcs = Data.Map.adjust (\x -> Func{actions = acts}) name (funcs prog) }
 	| otherwise = prog{funcs = Data.Map.insert name Func{actions=acts} (funcs prog) }
 
-doNDAction (NDActionPos (NDCallFunction (NDTYPEf name)) xx yy _ _) Program{stack = x, funcs = f}
+doNDAction (NDActionPos (NDCallFunction (NDTYPEf name)) _ _ _ _) Program{stack = x, funcs = f}
 	| member name f = execute (actions (f ! name)) Program{stack = x, funcs = f}
-	| otherwise = Program{stack = aPush x (NDTYPErr ("Runtime error at line " ++ (show xx) ++ " and pos " ++ (show yy) ++ ": You've tried call undeclared function <" ++ name ++ ">.")), funcs = f}
+	| otherwise = Program{stack = aPush x (NDTYPErr ("you've tried call undeclared function <" ++ name ++ ">.")), funcs = f}
 
 doNDAction (NDActionPos NDExit _ _ _ _) prog =
 	prog
 
-doNDAction (NDActionPos NDSCallFunction xx yy _ _) Program{stack = (x:xs), funcs = f}  
-	| isFunc x =  doNDAction (NDActionPos (NDCallFunction x) 0 0 0 0) Program{stack = xs, funcs = f}
-	| otherwise = Program{stack =  aPush (x:xs) (NDTYPErr ("Stack Error at line " ++ (show xx) ++ "and pos " ++ (show yy) ++ ": While trying to call function from stack, incompatible type was detected.")), funcs = f}
+doNDAction (NDActionPos NDSCallFunction xx yy xxx yyy) Program{stack = (x:xs), funcs = f}  
+	| isFunc x =  doNDAction (NDActionPos (NDCallFunction x) xx yy xxx yyy) Program{stack = xs, funcs = f}
+	| otherwise = Program{stack =  aPush (x:xs) (NDTYPErr ("while trying to call function from stack, incompatible type was detected.")), funcs = f}
 --	| otherwise = error "DataStack Error : calling function from stack. Incompatible type (expected: NDTYPEf)."
 
 ------------------------------------------------------------------------
