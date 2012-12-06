@@ -24,15 +24,15 @@ data NDAction = NDPush NDTYPE		--
 	|DivD				-- для деления Double
 	|Div				-- целая часть деления
 	|Mod				-- остаток от деления
-	|GE				-- сравнения >:<:==:>=:<=:<>
-	|LE				--
-	|G				--
-	|L				--
-	|E				--
-	|NE				--
+	|GE					-- сравнения >:<:==:>=:<=:<>
+	|LE					--
+	|G					--
+	|L					--
+	|E					--
+	|NE					--
 	|NOT				--
 	|AND				--
-	|OR				--
+	|OR					--
 	|XOR				--
 	|NDIf [NDActionPos] [NDActionPos]	-- условие NDIf [При True] [При False]
 	|NDNewFunction NDTYPE [NDActionPos]-- объявление функции

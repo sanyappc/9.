@@ -19,12 +19,15 @@ main::IO ()
 
 main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 	where
+		{- loop function -}
 		loop::Program -> InputT IO()
+
 		loop Program{stack = ((NDTYPErr err):xs), funcs = f } = 
 			outputStrLn err >> 
 			loop Program{stack = xs, funcs = f}
+
 		loop prog = do
-			outputStrLn $ showNew (stack prog)
+--			outputStrLn $ showNew (stack prog)
 			input <- getInputLine "9.: "
 			case input of
 				Nothing -> 
@@ -35,12 +38,28 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 					outputStrLn ("9.: Loading files: " ++ (unwords $ words files)) >>  
 					return (words files) >>=
 					load prog >>=
-					loop
+					check
+--					loop
 --					(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 				Just input ->	
 					return (execute (parser input) prog) >>= 
-					loop
+					check
+--					loop
 --					(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
+
+		{- just checking -}
+		check::Program -> InputT IO()
+
+		check Program{stack = ((NDTYPErr err):xs), funcs = f } =
+			outputStrLn err >> 
+			outputStrLn (showNew xs) >>
+			loop Program{stack = xs, funcs = f}
+
+		check prog =
+			outputStrLn (showNew (stack prog)) >>
+			loop prog
+
+		{- loading file procedure -}
 		load prog [] = 
 			return prog
 		load Program{stack = ((NDTYPErr err):xs), funcs = f } _ =
