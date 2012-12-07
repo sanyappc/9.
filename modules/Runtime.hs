@@ -10,7 +10,6 @@ import NDType
 import NDParse
 import NDAction
 import NDActionHandlers
-import Text.Printf
 import Data.Map
 {- Read about maps: http://book.realworldhaskell.org/read/data-structures.html -}
 {- http://www.haskell.org/ghc/docs/6.12.2/html/libraries/containers-0.3.0.0/Data-Map.html -}
@@ -25,12 +24,6 @@ data Func = Func { actions::[NDActionPos] }
 ------------------------------------------------------------------------
 data Program = Program { stack::[NDTYPE], funcs::(Map String Func)}
 
-------------------------------------------------------------------------
-{- Per line loop of runtime -}
-------------------------------------------------------------------------
-loop::Program -> String -> Program
-
-loop prog str = execute (parser str) prog
 ------------------------------------------------------------------------
 {- Execute Actions... -}
 {- actions->stack->changed_stack -}
@@ -55,7 +48,7 @@ execute (x:xs) prog =
 
 check::NDActionPos -> Program -> Program
 check (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
-	Program{stack = (NDTYPErr ("error: line " ++ (show xx) ++ ": pos " ++ (show yy) ++ ": " ++ err):xs), funcs = f}
+	Program{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err):xs), funcs = f}
 
 check _ prog = prog
 
