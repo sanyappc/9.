@@ -47,6 +47,7 @@ execute (x:xs) prog =
 --	execute xs (doNDAction x prog)
 
 check::NDActionPos -> Program -> Program
+
 check (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
 	Program{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err):xs), funcs = f}
 
@@ -55,6 +56,8 @@ check _ prog = prog
 ------------------------------------------------------------------------
 {- Execution of single NDAction -}
 ------------------------------------------------------------------------
+ecallf = "calling function from stack"
+
 doNDAction::NDActionPos -> Program -> Program
 
 doNDAction (NDActionPos NDPop _ _ _ _) prog =
@@ -63,8 +66,8 @@ doNDAction (NDActionPos NDPop _ _ _ _) prog =
 doNDAction (NDActionPos (NDPush a) _ _ _ _) prog =
 	prog{stack = aPush (stack prog) a}
 
-doNDAction (NDActionPos NDSwap _ _ _ _) prog = prog{stack =
-	aSwap (stack prog)}  
+doNDAction (NDActionPos NDSwap _ _ _ _) prog = 
+	prog{stack = aSwap (stack prog)}  
 
 doNDAction (NDActionPos NDDSwap _ _ _ _) prog =
 	prog{stack = aDSwap (stack prog)}
@@ -136,15 +139,20 @@ doNDAction (NDActionPos (NDNewFunction (NDTYPEf name) acts) _ _ _ _) prog
 
 doNDAction (NDActionPos (NDCallFunction (NDTYPEf name)) _ _ _ _) Program{stack = x, funcs = f}
 	| member name f = execute (actions (f ! name)) Program{stack = x, funcs = f}
-	| otherwise = Program{stack = aPush x (NDTYPErr ("you've tried call undeclared function <" ++ name ++ ">.")), funcs = f}
+	| otherwise = Program{stack = aPush x (NDTYPErr ("undeclared function: \"" ++ name ++ "\"")), funcs = f}
 
 doNDAction (NDActionPos NDExit _ _ _ _) prog =
 	prog
 
+doNDAction (NDActionPos NDSCallFunction xx yy xxx yyy) Program{stack = [], funcs = f} =
+	Program{stack = [NDTYPErr $ ecallf++erempty], funcs = f}
 doNDAction (NDActionPos NDSCallFunction xx yy xxx yyy) Program{stack = (x:xs), funcs = f}  
 	| isFunc x =  doNDAction (NDActionPos (NDCallFunction x) xx yy xxx yyy) Program{stack = xs, funcs = f}
-	| otherwise = Program{stack =  aPush (x:xs) (NDTYPErr ("while trying to call function from stack, incompatible type was detected.")), funcs = f}
---	| otherwise = error "DataStack Error : calling function from stack. Incompatible type (expected: NDTYPEf)."
+	| otherwise = Program{stack = ((NDTYPErr $ ecallf++": incompatible type"):x:xs), funcs = f}
+
+doNDAction _ Program{stack = xs, funcs = f} = 
+	Program{stack = ((NDTYPErr ("runtime"++erunkn)):xs), funcs = f}
+
 
 ------------------------------------------------------------------------
 {- Function return Bool from NDBool or generate error -}

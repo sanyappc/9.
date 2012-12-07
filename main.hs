@@ -5,13 +5,12 @@ import NDType
 import NDParse
 import NDAction
 import NDActionHandlers
-import Text.Printf 
 import System.Console.Haskeline
-import Data.Map
+import Data.Map(fromList)
 import Control.Monad.IO.Class
+import System.Directory
 
 import Prelude hiding (catch)
-import System.Directory
 import Control.Exception hiding (catch,throwIO)
 import System.IO.Error hiding (catch)
 
@@ -22,24 +21,23 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 		{- loop function -}
 		loop::Program -> InputT IO()
 
-		loop Program{stack = ((NDTYPErr err):xs), funcs = f } = 
-			outputStrLn err >> 
-			loop Program{stack = xs, funcs = f}
+--		loop Program{stack = ((NDTYPErr err):xs), funcs = f } = 
+--			outputStrLn err >> 
+--			loop Program{stack = xs, funcs = f}
 
 		loop prog = do
 --			outputStrLn $ showNew (stack prog)
-			input <- getInputLine "9.: "
+			input <- getInputLine "> "
 			case input of
 				Nothing -> 
 					return ()
 				Just "q" -> 
-					outputStrLn "9.: Good bye!!!!"
+					outputStrLn "good bye!!!"
 				Just ('l':' ':files) ->	
-					outputStrLn ("9.: Loading files: " ++ (unwords $ words files)) >>  
+					outputStrLn ("loading files: " ++ (unwords $ words files)) >>  
 					return (words files) >>=
 					load prog >>=
-					check
---					loop
+					loop
 --					(\t -> (outputStrLn $ showNew (stack t)) >> loop t )
 				Just input ->	
 					return (execute (parser input) prog) >>= 
@@ -62,19 +60,27 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 		{- loading file procedure -}
 		load prog [] = 
 			return prog
-		load Program{stack = ((NDTYPErr err):xs), funcs = f } _ =
-			return Program{stack = ((NDTYPErr err):xs), funcs = f }
+--		load Program{stack = ((NDTYPErr err):xs), funcs = f } _ =
+--			outputStrLn err >> 
+--			return Program{stack = ((NDTYPErr err):xs), funcs = f }
 		load prog (x:xs) = 
 			liftIO ( readFile x `catch` handleExistance )>>=
 			handleExistance' x prog >>=
-			(\t -> load t xs)
+			(\t -> checkl t xs)
 			where 
 				handleExistance err | isDoesNotExistError err = return ""
 						    | otherwise = throwIO err
 				handleExistance' name prog [] = 
-					outputStrLn ("File \""++name++"\" is empty or doesn't exist") >> 
+					outputStrLn ("error: file \""++name++"\" is empty or doesn't exist") >> 
 					return prog
 				handleExistance' name prog file = 
-					outputStrLn ("Executing file \""++name++"\"") >>
+					outputStrLn ("executing file: \""++name++"\"") >>
 					return (execute (parser file) prog)
-														    
+		
+		checkl Program{stack = ((NDTYPErr err):xs), funcs = f } _ =
+			outputStrLn err >> 
+			outputStrLn (showNew xs) >>
+			load Program{stack = xs, funcs = f}	[]		
+		checkl prog files =
+			outputStrLn (showNew (stack prog)) >>
+			load prog files
