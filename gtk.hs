@@ -39,8 +39,8 @@ main = do
 	set stackl [ labelText := pstack ]
 	set ecur [ entryText := show current ]
 	set scur [ labelText := show current ]
-	set sline [ labelText := show a ]
-	set scol [ labelText := show b ]
+	set sline [ labelText := showCur a ]
+	set scol [ labelText := showCur b ]
 	
 	onClicked nextb $ do
 		current <- get scur labelText
