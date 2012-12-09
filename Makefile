@@ -17,7 +17,7 @@ cgi:
 	$(CC) $(MODULES) ./cgi.hs -o ./bin/cgi
 
 gui:
-	$(CC) $(MODULES) ./gui.hs -o ./bin/gui
+	$(CC) $(MODULES) ./gtk.hs -o ./bin/gui
 
 start:
 	$(CC) $(CFLAGS) $(MODULES) ./$(TARGET) -o $(EXECUTABLE)
