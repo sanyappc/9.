@@ -5,7 +5,7 @@ import NDType
 import NDParse
 import NDAction
 import NDActionHandlers
-import System.Environment(getArgs)
+import System.Environment(getArgs,getProgName)
 import Data.Map(fromList)
 
 import Graphics.UI.Gtk
@@ -15,10 +15,13 @@ main::IO ()
 
 main = do
 	args <- getArgs
+	name <- getProgName
+	checkArgs args name
 	filename <- return $ (!!) args 0
 	code <- readFile filename 
 	initGUI
-	(Just xml) <- xmlNew "gtk.xml"
+	xml <- xmlNew "gtk.xml"
+	xml <- checkXML xml
 	window <- xmlGetWidget xml castToWindow "window"
 	onDestroy window mainQuit
 	codel <- xmlGetWidget xml castToLabel "code"
@@ -81,7 +84,13 @@ main = do
 		-- set stackl [ labelText := showNew (stack (proglist !! current)) ]
 	widgetShowAll window
 	mainGUI
-	
+
+checkArgs args name =
+	if (length args < 1) 
+		then error ("no input file specified!\nusage: " ++ name ++ " filename")
+		else return ()
+checkXML Nothing = error "interface file gtk.xml was not found!"
+checkXML (Just xml) = return xml
 showCur (-2) = "err"
 showCur (-1) = "end"
 showCur a = show a
