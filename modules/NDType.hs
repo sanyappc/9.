@@ -28,6 +28,10 @@ showNew a = showLoop a "["
 showLoop (a:[]) string = string ++ (showType a) ++ "]"
 showLoop (a:b) string = showLoop b (string++(showType a)++",") 
 
+showNewLn [] = "stack is empty"
+showNewLn (a:[]) = showType a
+showNewLn (a:b) = showType a ++ "\n" ++ showNewLn b
+
 showType (NDTYPEi a) = "NDTYPEi "++show a
 showType (NDTYPEd a) = "NDTYPEd "++show a
 showType (NDTYPEc a) = "NDTYPEc '"++(replaceChar a)++"'"

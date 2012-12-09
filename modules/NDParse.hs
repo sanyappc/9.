@@ -42,9 +42,9 @@ skipper :: Parser NDActionPos
 skipper = do
           start <- getPosition
           tmp <- try actions <|> types
-          skip
           finish <- getPosition
-          return (NDActionPos tmp (sourceLine start) (sourceColumn start) (sourceLine finish - 1) (sourceColumn finish - 1))
+          skip
+          return (NDActionPos tmp (sourceLine start) (sourceColumn start) (sourceLine finish) (sourceColumn finish))
 types :: Parser NDAction
 types = do
         tmp <- try pdigits <|> 
