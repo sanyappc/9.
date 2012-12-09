@@ -6,7 +6,19 @@ MODULE = NDType.hs NDActionHandlers.hs NDAction.hs NDParse.hs Runtime.hs
 MODULES = $(addprefix $(MODULESDIR), $(MODULE))
 TARGET = main.hs
 
-all: start clean finish
+all: check con
+check:
+	if [ ! -d bin ] ; then mkdir ./bin ; fi
+
+con:
+	$(CC) $(MODULES) ./main.hs -o ./bin/con
+
+cgi:
+	$(CC) $(MODULES) ./cgi.hs -o ./bin/cgi
+
+gui:
+	$(CC) $(MODULES) ./gui.hs -o ./bin/gui
+
 start:
 	$(CC) $(CFLAGS) $(MODULES) ./$(TARGET) -o $(EXECUTABLE)
 finish:	
@@ -17,4 +29,4 @@ clean:
 	find . -name '*.hs.*' -delete
 	find . -name '*.o' -delete
 	find . -name '*.hs~' -delete
-	rm -f ./bin/$(EXECUTABLE)	
+	rm -f ./bin/*
