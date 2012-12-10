@@ -63,7 +63,8 @@ main = do
 	onClicked prevb $ do
 		current <- get scur labelText
 		(current,((a,b),pstack)) <- getStack ((read current::Int)-1) stack
-		set codel [ labelText := makeCode (a,b) code ]
+		--set codel [ labelText := makeCode (a,b) code ]
+		labelSetMarkup codel ("<tt>"++ makeCode (a,b) code ++"</tt>")
 		set stackl [ labelText := pstack ]
 		set ecur [ entryText := show current ]
 		set scur [ labelText := show current ]
@@ -72,7 +73,8 @@ main = do
 	onClicked curb $ do
 		current <- get ecur entryText
 		(current,((a,b),pstack)) <- getStack (read current::Int) stack
-		set codel [ labelText := makeCode (a,b) code ]
+		--set codel [ labelText := makeCode (a,b) code ]
+		labelSetMarkup codel ("<tt>"++ makeCode (a,b) code ++"</tt>")
 		set stackl [ labelText := pstack ]
 		set ecur [ entryText := show current ]
 		set scur [ labelText := show current ]
