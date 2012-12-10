@@ -18,12 +18,15 @@ main = do
 	name <- getProgName
 	checkArgs args name
 	filename <- return $ (!!) args 0
-	code <- readFile filename 
+	code <- readFile filename
 	initGUI
 	xml <- xmlNew "gtk.xml"
 	xml <- checkXML xml
 	window <- xmlGetWidget xml castToWindow "window"
 	onDestroy window mainQuit
+	windowSetTitle window ("9. stepper: "++filename)
+	pxm <- pixbufNewFromXPMData logo
+	windowSetIcon window (Just pxm)
 	codel <- xmlGetWidget xml castToLabel "code"
 	stackl <- xmlGetWidget xml castToLabel "stack"
 	prevb <- xmlGetWidget xml castToButton "prev" 
@@ -80,6 +83,16 @@ main = do
 		set scur [ labelText := show current ]
 		set sline [ labelText := showCur a ]
 		set scol [ labelText := showCur b ]
+	afterEntryActivate ecur $ do
+		current <- get ecur entryText
+		(current,((a,b),pstack)) <- getStack (read current::Int) stack
+		--set codel [ labelText := makeCode (a,b) code ]
+		labelSetMarkup codel ("<tt>"++ makeCode (a,b) code ++"</tt>")
+		set stackl [ labelText := pstack ]
+		set ecur [ entryText := show current ]
+		set scur [ labelText := show current ]
+		set sline [ labelText := showCur a ]
+		set scol [ labelText := showCur b ]
 	--onClicked prevb $ do
 		--current <- return (current - 1)
 		--labelSetText stackl (showNew (stack (proglist !! 0)))
@@ -127,3 +140,50 @@ runGTK proglist actionlist current = do
 execsome [] prog = prog	
 execsome (x:xs) prog = execsome xs (prog++[(check x (doNDAction x (prog !! (length prog -1))))])
 -}
+logo = ["35 35 11 1",
+	" \tc None",
+	".\tc #0E1897",
+	"+\tc #0E1898",
+	"@\tc #0F1897",
+	"#\tc #0E1997",
+	"$\tc #0E1896",
+	"%\tc #0F1998",
+	"&\tc #0E1998",
+	"*\tc #0F1898",
+	"=\tc #0F1997",
+	"-\tc #0F1996",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                .+@#@$             ",
+	"              #%%%%%%%%.           ",
+	"            .%%%%%%%%%%%$          ",
+	"            %%%%%%%%%%%%%          ",
+	"           &%%%%+   *%%%%.         ",
+	"           %%%%.     %%%%@         ",
+	"          &%%%%      %%%%&         ",
+	"          %%%%%      %%%%*         ",
+	"          =%%%%     =%%%%.         ",
+	"          *%%%%.   .%%%%%.         ",
+	"          +%%%%%%%%%%%%%%=         ",
+	"           =%%%%%%%%%%%%%          ",
+	"            @%%%%%%++%%%#          ",
+	"             .&=#%  +%%%=          ",
+	"                   =%%%.           ",
+	"          .      @+%%%%      %%%   ",
+	"          %%%%%%%%%%%%%      %%%   ",
+	"         @%%%%%%%%%%%.      -%%%   ",
+	"         +%%%%%%%%%+        %%%%   ",
+	"           @+@+&%#          =%%%   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   ",
+	"                                   "]

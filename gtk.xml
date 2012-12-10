@@ -2,7 +2,7 @@
 <!DOCTYPE glade-interface SYSTEM "http://gazpacho.sicem.biz/gazpacho-0.1.dtd">
 <glade-interface>
     <widget class="GtkWindow" id="window">
-        <property name="default_height">250</property>
+        <property name="default_height">480</property>
         <property name="default_width">640</property>
         <property name="mnemonics_visible">False</property>
         <property name="title" context="yes" translatable="yes">9. stepper</property>
@@ -41,6 +41,7 @@
                                         <property name="visible">True</property>
                                         <child>
                                             <widget class="GtkLabel" id="stack">
+												<property name="selectable">True</property>
                                                 <property name="visible">True</property>
                                                 <property name="xalign">0.0</property>
                                                 <property name="yalign">0.0</property>
