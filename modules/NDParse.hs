@@ -9,7 +9,7 @@ import Text.ParserCombinators.Parsec ( parse, Parser, manyTill,
                                        try, eof, string, char,
                                        digit, many, many1, anyChar,
                                        noneOf, skipMany, newline,
-                                       tab, space, (<|>), lookAhead)                                     
+                                       tab, space, (<|>), lookAhead, choice)                                     
 import Text.Parsec.Error (errorMessages, errorPos,Message(SysUnExpect),Message(UnExpect),Message(Message))
 import Text.Parsec.Prim (parsecMap,getPosition)
 import Text.Parsec.Pos (sourceColumn,sourceLine)
@@ -51,6 +51,7 @@ types = do
                try pbool <|> 
                try pchar <|> pstring
         return tmp
+{-
 actions :: Parser NDAction
 actions =  do
            tmp <- try ppop <|> 
@@ -175,7 +176,7 @@ pnot :: Parser NDAction
 pnot = do
        string "~"
        skip1
-       return NOT
+       return NOT 
 pand :: Parser NDAction
 pand = do
        string "&&"
@@ -196,6 +197,36 @@ pcat = do
        string "9."
        skip1
        return NDCat
+-} 
+actions :: Parser NDAction
+actions = choice (map apply pactions) 
+	where apply (c,e) = do {string c; skip1; return e}
+pactions = [("pop",NDPop)
+           ,("dswap",NDDSwap)
+           ,("swap",NDSwap)
+           ,("rotr",NDRotR)
+           ,("->",NDRotR)
+           ,("rotl",NDRotL)
+           ,("<-",NDRotL)
+           ,("dup",NDDup)
+           ,("+",NDAdd)
+           ,("-",NDSub)
+           ,("*",NDMul)
+           ,("/",DivD)
+           ,("div",Div)
+           ,("mod",Mod)
+           ,(">=",GE)
+           ,("<=",LE)
+           ,("==",E)
+           ,("<>",NE)
+           ,(">",G)
+           ,("<",L)
+           ,("~",NOT)
+           ,("&&",AND)
+           ,("||",OR)
+           ,("xor",XOR)
+           ,("9.",NDCat)
+           ]
 -- Simple actions - end  
 -- Types - begin     
 pbool :: Parser NDAction
@@ -204,11 +235,26 @@ pbool = do
         return (NDPush (NDTYPEb ( read tmp :: Bool )))
 pdigits :: Parser NDAction
 pdigits = do
-        tmp0 <- char '-' <|> digit
-        tmp1 <- many digit
-        tmp2 <- try $ pdouble (tmp0 : tmp1) <|> pint (tmp0 : tmp1)
+        tmp0 <- pdf
+        tmp1 <- pds tmp0
+		--tmp1 <- (try $ do { char '.'; tmp <- many1 digit; return $ NDPush (NDTYPEd (read(tmp0++"."++tmp)::Double)) }) <|>
+		--		(return $ NDPush (NDTYPEi (read tmp0::Integer)))
+        --tmp2 <- try $ pdouble (tmp0) <|> pint (tmp0)
         skip1
-        return tmp2
+        return tmp1
+pdf :: Parser String
+pdf = try (do{ char '-'
+             ; tmp <- many1 digit
+             ; return ('-':tmp)
+             } ) <|> 
+      (do{ tmp <- many1 digit; return tmp } )
+pds :: String -> Parser NDAction
+pds i = try (do{ char '.'
+               ; tmp <- many1 digit
+               ; return (NDPush (NDTYPEd (read(i++"."++tmp)::Double)))
+               }) <|>
+        return (NDPush (NDTYPEi (read i::Integer)))
+{-
 pdouble :: String -> Parser NDAction
 pdouble i = do
             char '.'
@@ -216,6 +262,7 @@ pdouble i = do
             return $ NDPush (NDTYPEd ( read ( i ++ "." ++ tmp) :: Double ))
 pint :: String -> Parser NDAction
 pint i = return (NDPush (NDTYPEi ( read i :: Integer )))
+-}
 pchar :: Parser NDAction
 pchar = do
         char '\''
@@ -223,10 +270,12 @@ pchar = do
         char '\''
         skip1
         return (NDPush (NDTYPEc tmp))
+        -- tmp <- between (char '\'') (char '\'') (try pchar' <|> anyChar)
 pchar' :: Parser Char
 pchar' = do
          char '\\'
-         tmp <- try pstring1 <|> pstring2
+         --tmp <- try pstring1 <|> pstring2
+         tmp <- pochar
          return tmp
 pstring :: Parser NDAction
 pstring = do
@@ -238,12 +287,19 @@ pstring = do
 pstring' :: Parser String
 pstring' = do
            char '\\'
-           tmp <- try pstring1 <|> pstring2
+           --tmp <- try pstring1 <|> pstring2
+           tmp <- pochar
            return [tmp]
-pstring1 :: Parser Char
-pstring1 = do
-           tmp <- char '\\' <|> char '\"' <|> char '\''
-           return tmp
+--pstring1 :: Parser Char
+--pstring1 = do
+--           tmp <- char '\\' <|> char '\"' <|> char '\''
+--           return tmp
+pochar :: Parser Char
+pochar = choice (map apply escapes)
+			where 
+				escapes = zip "\\\"\'abfnrtv" "\\\"\'\a\b\f\n\r\t\v"
+				apply (c,e) = do {char c; return e}
+{-
 pstring2 :: Parser Char
 pstring2 = do
            tmp <- try pstring2N <|> 
@@ -271,6 +327,7 @@ pstring2F :: Parser Char
 pstring2F = do
             char 'f'
             return '\f'
+-}
 -- Types - end   
 -- IF statement - begin
 parserelse :: Parser [NDActionPos]
@@ -325,4 +382,4 @@ ppushf = do
 -- functions - end
 skip = skipMany ( space <|> newline <|> tab ) 
 skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
-skipstring = " \n\r\t\v\f"
+skipstring = " \a\b\f\n\r\t\v"
