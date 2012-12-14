@@ -36,7 +36,8 @@ main = do
 	scur <- xmlGetWidget xml castToLabel "scur"
 	sline <- xmlGetWidget xml castToLabel "sline"
 	scol <- xmlGetWidget xml castToLabel "scol"
-	stack <- return $ runProg (parser code) Program{stack = [], funcs = fromList []}
+	--stack <- return $ runProg (parser code) Program{stack = [], funcs = fromList []}
+	(graph,stack) <- return $ executeByStepEx code
 	code <- firstmakeCode (lines code) 1 []
 
 	(current,((a,b),pstack)) <- getStack 0 stack
