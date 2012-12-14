@@ -34,41 +34,50 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 					load prog >>=
 					loop
 				Just input ->	
-					return (execute (parser input) prog) >>= 
+					multiline input >>=
+					(\t -> return (execute (parser t) prog)) >>= 
 					check
 			where	
-				{- just checking -}
-				check::Program -> InputT IO()
-
-				check Program{stack = ((NDTYPErr err):xs), funcs = f } =
-					outputStrLn err >> 
-					outputStrLn (showNew xs) >>
-					loop Program{stack = xs, funcs = f}
-
-				check prog =
-					outputStrLn (showNew (stack prog)) >>
-					loop prog
-		{- loading file procedure -}
-		load prog [] = 
-			return prog
-		load prog (x:xs) = do
-			exists <- liftIO $ doesFileExist x
-			if (exists) 
-				then do
-					if (takeExtension x == ".9") 
-						then do
-							file <- liftIO $ readFile x
-							outputStrLn ("executing file: \""++ takeFileName x ++"\"")
-							checkl (execute (parser file) prog) xs
-						else do
-							outputStrLn ("error: "++ takeFileName x ++": file format not recognized")
-							outputStrLn (showNew (stack prog))
-							return prog
-				else do
-					outputStrLn ("error: "++ takeFileName x ++": no such file or directory")
-					outputStrLn (showNew (stack prog))
-					return prog
-			where
+			{- just checking -}
+			check::Program -> InputT IO()
+			check Program{stack = ((NDTYPErr err):xs), funcs = f } =
+				outputStrLn err >> 
+				outputStrLn (showNew xs) >>
+				loop Program{stack = xs, funcs = f}
+			check prog =
+				outputStrLn (showNew (stack prog)) >>
+				loop prog
+			{- get multiline -}	
+			multiline input = 
+				if (last input /= '\\')
+					then do
+						return input
+					else do
+						inputnew <- getInputLine "> "
+						multiline (init input ++ "\n" ++ takemultiline inputnew)
+			takemultiline Nothing = []
+			takemultiline (Just input) = input	
+			{- loading file procedure -}
+			load prog [] = 
+				return prog
+			load prog (x:xs) = do
+				exists <- liftIO $ doesFileExist x
+				if (exists) 
+					then do
+						if (takeExtension x == ".9") 
+							then do
+								file <- liftIO $ readFile x
+								outputStrLn ("executing file: \""++ takeFileName x ++"\"")
+								checkl (execute (parser file) prog) xs
+							else do
+								outputStrLn ("error: "++ takeFileName x ++": file format not recognized")
+								outputStrLn (showNew (stack prog))
+								return prog
+					else do
+						outputStrLn ("error: "++ takeFileName x ++": no such file or directory")
+						outputStrLn (showNew (stack prog))
+						return prog
+				where
 				{- just checking for files -}
 				checkl Program{stack = ((NDTYPErr err):xs), funcs = f } _ =
 					outputStrLn err >> 
