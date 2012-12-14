@@ -21,9 +21,9 @@ data NDTYPE =
 -- Замена стандартного show для нормального отображения 
 -- кириллицы на стеке
 -------------------------------------------------------------------------------
-showNew [] = "[]"
-showNew (a:[]) = "["++(showType a)++"]"
-showNew a = showLoop a "["
+showNew [] = "stack: []"
+showNew (a:[]) = "stack: ["++(showType a)++"]"
+showNew a = showLoop a "stack: ["
 
 showLoop (a:[]) string = string ++ (showType a) ++ "]"
 showLoop (a:b) string = showLoop b (string++(showType a)++",") 
