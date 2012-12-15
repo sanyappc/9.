@@ -390,7 +390,7 @@ execution (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), tmp = (t:ts)
 				tmp = ts,
 				funcs = f,
 				res = 	(g ++ (newCluster i "if true branch"),
-						stack ++ [((x, y), showSuper (ss, (t:ts)))]
+						stack ++ [((x, y), showSuper ((s:ss), (t:ts)))]
 						),
 				i = i + 1,
 				prev = prev,
