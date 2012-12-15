@@ -1,10 +1,10 @@
 module Main where
 
-import Runtime 
-import NDType
-import NDParse
-import NDAction
-import NDActionHandlers
+--import Runtime 
+--import NDType
+--import NDParse
+--import NDAction
+--import NDActionHandlers
 import NDGraph(executeByStepEx)
 import System.Environment(getArgs,getProgName)
 import Data.Map(fromList)
