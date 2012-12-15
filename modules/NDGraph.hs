@@ -238,6 +238,19 @@ execution (NDActionPos Div x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res 
 		prev = "node" ++ (show i),
 		owner = owner
 	}
+-- mul
+execution (NDActionPos NDMul x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aMul s,
+		tmp = (owner:ts),
+		funcs = f,
+		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"*\"];\n" ++ (link i prev),
+				stack ++ [((x, y),
+				showSuper (s, (a:b:ts)))]
+				),
+		i = i + 1,
+		prev = "node" ++ (show i),
+		owner = owner
+	}
 -- mod
 execution (NDActionPos Mod x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
 	P{	stack = aMod s,
