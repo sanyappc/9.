@@ -51,6 +51,7 @@ types = do
                try pbool <|> 
                try pchar <|> pstring
         return tmp
+{-
 actions :: Parser NDAction
 actions =  do
            tmp <- try ppop <|> 
@@ -196,18 +197,15 @@ pcat = do
        string "9."
        skip1
        return NDCat
- 
-{-
-i'll fix it in devel branch
+-}
 actions :: Parser NDAction
 actions = choice (map apply pactions) <|>
-          try pexit <|> 
           try ppushf <|>
           try pscallf <|>
           try pcallf <|>
           try pnewf <|> pcondition
                 -- I need to fix some things there
-	where apply (c,e) = do { string c; skip1; return e}
+	where apply (c,e) = try $ do { string c; skip1; return e}
 pactions = [("pop",NDPop)
            ,("dswap",NDDSwap)
            ,("swap",NDSwap)
@@ -233,8 +231,9 @@ pactions = [("pop",NDPop)
            ,("||",OR)
            ,("xor",XOR)
            ,("9.",NDCat)
+           ,("exit",NDExit)
            ]
- -}
+
 -- Simple actions - end  
 -- Types - begin     
 pbool :: Parser NDAction
@@ -358,11 +357,13 @@ pcondition = do
              return (NDIf pthen pelse)
 -- IF statement - end
 -- functions - begin
+{-
 pexit :: Parser NDAction
 pexit = do
         string "exit"
         skip1
         return NDExit
+-}
 pscallf :: Parser NDAction
 pscallf = do
          char '@'
