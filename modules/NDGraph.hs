@@ -567,9 +567,12 @@ showSuper ((a:[]), (owner:[])) =
 showSuper ((a:b), (owner:owners)) =
 	showType a ++ (ownerPrint owner) ++ "\n" ++ showSuper (b, owners)
 
-showSuper (_,_) =
-	""
---	"(_._)"
+showSuper (_,[]) =
+--	""
+	"(_._)"
+
+showSuper ([], _) = 
+	"=(.)(.)="
 
 ownerPrint::String -> String
 
