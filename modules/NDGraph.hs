@@ -14,8 +14,14 @@ data Func = Func { actions::[NDActionPos] }
 --------------------------------------------------------------------------------
 {- Data structure for program representation -}
 --------------------------------------------------------------------------------
-data P = P{ stack::[NDTYPE], funcs::(Map String Func), res::(String, [((Int, Int), String)]), i::Integer, prev::String}
-
+data P = P{ stack::[NDTYPE],
+			tmp::[String],
+			funcs::(Map String Func),
+			res::(String, [((Int, Int),String)]),
+			i::Integer,
+			prev::String,
+			owner::String
+		}
 --------------------------------------------------------------------------------
 {-
    graph init
@@ -45,14 +51,25 @@ graphEnd g = g ++ "}"
 executeByStepEx::String -> (String, [((Int, Int), String)])
 
 executeByStepEx src =
-	(res (lets (parser src) P{stack = [], funcs = fromList [], res = (graphInit, []), i = 0, prev = ""}))
+	(heh (lets (parser src) P{	stack = [],
+								tmp = [],
+								funcs = fromList [],
+								res = (graphInit, []),
+								i = 0,
+								prev = "",
+								owner = ""
+								}))
+	where
+		heh:: P -> (String, [((Int, Int), String)])
+		heh P{stack = s, tmp = ts, funcs = _, res = (graph, stack), i = _, prev = _, owner = _} =
+			(graph, stack ++ [((-1, -1), showSuper (s, ts))])
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 lets::[NDActionPos] -> P -> P
 
-lets _ P{stack = (NDTYPErr err:xs), funcs = f, res = (graph, stack), i = i, prev = prev} =
-	P{stack = xs, funcs = f, res = (graph, stack ++ [((-2, -2), err)]), i = i, prev = prev}
+lets _ P{stack = (NDTYPErr err:xs), tmp = (t:ts), funcs = f, res = (graph, stack), i = i, prev = prev, owner = owner} =
+	P{stack = xs, tmp = ts, funcs = f, res = (graph, stack ++ [((-2, -2), err)]), i = i, prev = prev, owner = owner}
 
 lets (act:acts) prog =
 	lets acts (check act (execution act prog))
@@ -62,12 +79,14 @@ lets [] p =
 
 check::NDActionPos -> P -> P
 
-check (NDActionPos _ xx yy _ _) P{stack = (NDTYPErr err:xs), funcs = f, res = r, i = i, prev = prev} =
+check (NDActionPos _ xx yy _ _) P{stack = (NDTYPErr err:xs), tmp = ts, funcs = f, res = r, i = i, prev = prev, owner = owner} =
 	P{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err):xs),
 		funcs = f,
+		tmp = (owner:ts),
 		res = r,
 		i = i,
-		prev = prev
+		prev = prev,
+		owner = owner
 	}
 
 check _ p = 
@@ -76,334 +95,407 @@ check _ p =
 --------------------------------------------------------------------------------
 execution::NDActionPos -> P -> P
 -- pop
-execution (NDActionPos NDPop x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aPop s,
+execution (NDActionPos NDPop x y _ _) P{stack = s, tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aPop s,
+		tmp = ts,
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"pop\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (t:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- push
-execution (NDActionPos (NDPush a) x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aPush s a,
+execution (NDActionPos (NDPush a) x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aPush s a,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"push\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, ts))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- swap
-execution (NDActionPos NDSwap x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aSwap s,
+execution (NDActionPos NDSwap x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aSwap s,
+		tmp = (owner:owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"swap\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 --dswap
-execution (NDActionPos NDDSwap x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aDSwap s,
+execution (NDActionPos NDDSwap x y _ _) P{stack = s, tmp = (a:b:c:d:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aDSwap s,
+		tmp = (owner:owner:owner:owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"double swap\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:c:d:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- rotr
-execution (NDActionPos NDRotR x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aRotR s,
+
+---
+execution (NDActionPos NDRotR x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aRotR s,
+		tmp = rot owner ts,
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"rotr\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, ts))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
+	}
+execution (NDActionPos NDRotL x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aRotL s,
+		tmp = rot owner ts,
+		funcs = f,
+		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"rotl\"];\n" ++ (link i prev),
+				stack ++ [((x, y),
+				showSuper (s, ts))]
+				),
+		i = i + 1,
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- dup
-execution (NDActionPos NDDup x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aDup s,
+execution (NDActionPos NDDup x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aDup s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"dup\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, ts))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- add
-execution (NDActionPos NDAdd x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aAdd s,
+execution (NDActionPos NDAdd x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aAdd s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"+\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- sub
-execution (NDActionPos NDSub x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aSub s,
+execution (NDActionPos NDSub x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aSub s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"-\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- divd
-execution (NDActionPos DivD x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aDivD s,
+execution (NDActionPos DivD x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aDivD s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"/\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- div
-execution (NDActionPos Div x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aDiv s,
+execution (NDActionPos Div x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aDiv s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"div\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- mod
-execution (NDActionPos Mod x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aMod s,
+execution (NDActionPos Mod x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aMod s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"mod\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- ge
-execution (NDActionPos GE x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aGE s,
+execution (NDActionPos GE x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aGE s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \">=\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- le
-execution (NDActionPos LE x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aLE s,
+execution (NDActionPos LE x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aLE s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"<=\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- g
-execution (NDActionPos G x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aGT s,
+execution (NDActionPos G x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aGT s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \">\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- l
-execution (NDActionPos L x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aLT s,
+execution (NDActionPos L x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aLT s,
+		tmp =(owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"<\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- e
-execution (NDActionPos E x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aE s,
+execution (NDActionPos E x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aE s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"=\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- ne
-execution (NDActionPos NE x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aNE s,
+execution (NDActionPos NE x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aNE s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"<>\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- not
-execution (NDActionPos NOT x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aNot s,
+execution (NDActionPos NOT x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aNot s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"not\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- and
-execution (NDActionPos AND x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aAnd s,
+execution (NDActionPos AND x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aAnd s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"&\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- or
-execution (NDActionPos OR x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aOr s,
+execution (NDActionPos OR x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aOr s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"|\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 -- xor
-execution (NDActionPos XOR x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = aXor s,
+execution (NDActionPos XOR x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aXor s,
+		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"xor\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showNew s)]
+				showSuper (s, (a:b:ts)))]
 				),
 		i = i + 1,
-		prev = "node" ++ (show i)
+		prev = "node" ++ (show i),
+		owner = owner
 	}
 
 -- if statement
-execution (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), funcs = f, res = (g, stack), i = i, prev = prev}
+execution (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
 	| toBool s =
-		over (lets true P{
+		over owner (lets true P{
 				stack = ss,
+				tmp = ts,
 				funcs = f,
 				res = 	(g ++ (newCluster i "if true branch"),
-						stack ++ [((x, y), showNew ss)]
+						stack ++ [((x, y), showSuper (ss, (t:ts)))]
 						),
 				i = i + 1,
-				prev = prev
+				prev = prev,
+				owner = owner
 			})
 	| otherwise =
-		over (lets false P{
+		over owner (lets false P{
 				stack = ss,
+				tmp = ts,
 				funcs = f,
 				res = 	(g ++ (newCluster i "if false branch"),
-						stack ++ [((x, y), showNew ss)]
+						stack ++ [((x, y), showSuper (ss, (t:ts)))]
 						),
 				i = i + 1,
-				prev = prev
+				prev = prev,
+				owner = owner
 			})		
 -- add new function
-execution (NDActionPos (NDNewFunction (NDTYPEf name) acts) x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev}
+execution (NDActionPos (NDNewFunction (NDTYPEf name) acts) x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
 	| member name f =
 		P{
 			stack = s,
+			tmp = ts,
 			funcs = Data.Map.adjust (\x -> Func{actions = acts}) name f,
 			res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"declare" ++ name ++ "\"];\n" ++ (link i prev),
-					stack ++ [((x, y), showNew s)]
+					stack ++ [((x, y), showSuper (s, ts))]
 					),
 			i = i + 1,
-			prev = "node" ++ (show i)
+			prev = "node" ++ (show i),
+			owner = owner
 		}
 	| otherwise =
 		P{
 			stack = s,
+			tmp = ts,
 			funcs = Data.Map.insert name Func{actions=acts} f,
 			res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"declare" ++ name ++ "\"];\n" ++ (link i prev),
-					stack ++ [((x, y), showNew s)]
+					stack ++ [((x, y), showSuper (s, ts))]
 					),
 			i = i + 1,
-			prev = "node" ++ (show i)
+			prev = "node" ++ (show i),
+			owner = owner
 		}
 -- call func from list...
-execution (NDActionPos (NDCallFunction (NDTYPEf name)) x y _ _) P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev}
+execution (NDActionPos (NDCallFunction (NDTYPEf name)) x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
 	| member name f =
-		over (
-				lets (actions (f ! name)) P{
+		over owner (lets (actions (f ! name)) P{
 					stack = s,
+					tmp = ts,
 					funcs = f,
 					res = 	(g ++ (newCluster i ("function " ++ name)),
-							stack ++ [((x, y), showNew s)]
+							stack ++ [((x, y), showSuper (s, ts))]
 							),
 					i = i + 1,
-					prev = prev					
+					prev = prev,
+					owner = name					
 				}
 			)
 	| otherwise =
 		P{
 			stack = aPush s (NDTYPErr ("undeclared function: \"" ++ name ++ "\"")),
+			tmp = (owner:ts),
 			funcs = f,
 			res =	(g, stack),
 			i = i + 1,
-			prev = prev
+			prev = prev,
+			owner = owner
 		}
 -- exit ?!
 execution (NDActionPos NDExit _ _ _ _) p =
 	p
 -- call from stack function
-execution (NDActionPos NDSCallFunction x y xx yy) P{stack = [], funcs = f, res = (g, stack), i = i, prev = prev} =
+execution (NDActionPos NDSCallFunction x y xx yy) P{stack = [], tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
 	P{
 		stack = [NDTYPErr $ ecallf++erempty],
+		tmp = [owner],
 		funcs = f,
-		res = (g, stack ++ [((x,y), showNew [])]),
+		res = (g, stack ++ [((x,y), showSuper ([], []))]),
 		i = i,
-		prev = prev
+		prev = prev,
+		owner = owner
 	}
 
-execution (NDActionPos NDSCallFunction x y xx yy) P{stack = (s:ss), funcs = f, res = (g, stack), i = i, prev = prev}
+execution (NDActionPos NDSCallFunction x y xx yy) P{stack = (s:ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
 	| isFunc s = 
 		execution (NDActionPos (NDCallFunction s) x y xx yy) P{
 			stack = ss,
+			tmp = ts,
 			funcs = f,
 			res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"call function from stack\"];\n" ++ (link i prev),
-					stack ++ [((x, y), showNew ss)]
+					stack ++ [((x, y), showSuper (ss, (t:ts)))]
 					),
 			i = i + 1,
-			prev = "node" ++ (show i)
+			prev = "node" ++ (show i),
+			owner = owner
 		}
 	| otherwise =
 		P{
 			stack = ((NDTYPErr $ ecallf++": incompatible type"):s:ss),
+			tmp = (owner:ts),
 			funcs = f,
 			res =	(g, stack),
 			i = i + 1,
-			prev = prev
+			prev = prev,
+			owner = owner
 		}
 -- заглушка
 execution _ p =
@@ -416,9 +508,9 @@ ecallf = "calling function from stack"
 --------------------------------------------------------------------------------
 -- support function for close subgraphs
 --------------------------------------------------------------------------------
-over::P -> P
-over P{stack = s, funcs = f, res = (g, stack), i = i, prev = prev} =
-	P{stack = s, funcs = f, res = (g ++ endCluster, stack), i = i, prev = prev}
+over::String -> P -> P
+over owner P{stack = s, tmp = tmp, funcs = f, res = (g, stack), i = i, prev = prev, owner = _} =
+	P{stack = s, tmp = tmp, funcs = f, res = (g ++ endCluster, stack), i = i, prev = prev, owner = owner}
 
 --------------------------------------------------------------------------------
 -- testing the value to be a bool
@@ -455,3 +547,34 @@ link _ "" =
 
 link i prev =
 	"\tnode" ++ (show (i - 1)) ++ "->node" ++ (show i) ++ ";\n"
+
+--- хитрый костыль
+rot::String -> [String] -> [String]
+
+rot owner (x:xs) = 
+	(owner:(rot owner xs))
+
+rot _ [] =
+	[]
+
+--- няшный стек
+showSuper::([NDTYPE], [String]) -> String
+
+showSuper ([],[])=
+	"stack is empty"
+showSuper ((a:[]), (owner:[])) =
+	showType a ++ (ownerPrint owner)
+showSuper ((a:b), (owner:owners)) =
+	showType a ++ (ownerPrint owner) ++ "\n" ++ showSuper (b, owners)
+
+showSuper (_,_) =
+	""
+--	"(_._)"
+
+ownerPrint::String -> String
+
+ownerPrint "" =
+	""
+
+ownerPrint owner =
+	"\t<" ++ owner ++ ">"
