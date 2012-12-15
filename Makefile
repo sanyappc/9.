@@ -21,7 +21,7 @@ cgi:
 
 gui:
 	if [ ! -d bin ] ; then mkdir ./bin ; fi
-	$(CC) $(MODULES) ./gtk.hs -o ./bin/gui
+	$(CC) $(MODULES) ./modules/NDGraph.hs ./gtk.hs -o ./bin/gui
 	make cleano
 
 #start:

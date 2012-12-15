@@ -49,7 +49,7 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 				loop prog
 			{- get multiline -}	
 			multiline input = 
-				if (last input /= '\\')
+				if ((length input == 0) || (last input /= '\\'))
 					then do
 						return input
 					else do

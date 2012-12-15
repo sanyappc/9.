@@ -5,6 +5,7 @@ import NDType
 import NDParse
 import NDAction
 import NDActionHandlers
+import NDGraph(executeByStepEx)
 import System.Environment(getArgs,getProgName)
 import Data.Map(fromList)
 
@@ -126,11 +127,11 @@ getStack i stack =
 		else if (i < 0) 
 				then return (0, stack !! 0)
 				else return (i, stack !! i)
-runProg :: [NDActionPos] -> Program -> [((Int,Int),String)]
-runProg _ Program{stack = (NDTYPErr err:xs), funcs = f} = [((-2,-2),err)]
-runProg [] prog = [((-1,-1),showNewLn $ stack prog)]
-runProg ((NDActionPos x a b c d):xs) prog =
-	([((a,b),showNewLn $ stack prog)]++(runProg xs (check (NDActionPos x a b c d) (doNDAction (NDActionPos x a b c d) prog))))
+--runProg :: [NDActionPos] -> Program -> [((Int,Int),String)]
+--runProg _ Program{stack = (NDTYPErr err:xs), funcs = f} = [((-2,-2),err)]
+--runProg [] prog = [((-1,-1),showNewLn $ stack prog)]
+--runProg ((NDActionPos x a b c d):xs) prog =
+--	([((a,b),showNewLn $ stack prog)]++(runProg xs (check (NDActionPos x a b c d) (doNDAction (NDActionPos x a b c d) prog))))
 {-
 runGTK proglist actionlist current = do
 	if (length proglist > current) 
