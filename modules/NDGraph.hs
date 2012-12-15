@@ -69,6 +69,9 @@ check (NDActionPos _ xx yy _ _) P{stack = (NDTYPErr err:xs), funcs = f, res = r,
 		i = i,
 		prev = prev
 	}
+
+check _ p = 
+	p
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 execution::NDActionPos -> P -> P
