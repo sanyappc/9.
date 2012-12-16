@@ -61,15 +61,18 @@ executeByStepEx src =
 								}))
 	where
 		heh:: P -> (String, [((Int, Int), String)])
+		heh P{stack = s, tmp = ts, funcs = _, res = (graph, stack), i = -1, prev = prev, owner = _} =
+			((graphEnd graph), stack)
+
 		heh P{stack = s, tmp = ts, funcs = _, res = (graph, stack), i = _, prev = _, owner = _} =
-			(graphEnd graph, stack ++ [((-1, -1), showSuper (s, ts))])
+			((graphEnd graph), stack ++ [((-1, -1), showSuper (s, ts))])
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 lets::[NDActionPos] -> P -> P
 
 lets _ P{stack = (NDTYPErr err:xs), tmp = (t:ts), funcs = f, res = (graph, stack), i = i, prev = prev, owner = owner} =
-	P{stack = xs, tmp = ts, funcs = f, res = (graph, stack ++ [((-2, -2), err)]), i = i, prev = prev, owner = owner}
+	P{stack = xs, tmp = ts, funcs = f, res = (graph, stack ++ [((-2, -2), err)]), i = -1, prev = err, owner = owner}
 
 lets (act:acts) prog =
 	lets acts (check act (execution act prog))
@@ -80,7 +83,7 @@ lets [] p =
 check::NDActionPos -> P -> P
 
 check (NDActionPos _ xx yy _ _) P{stack = (NDTYPErr err:xs), tmp = ts, funcs = f, res = r, i = i, prev = prev, owner = owner} =
-	P{	stack = [(NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err))],
+	P{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err):xs),
 		funcs = f,
 		tmp = (owner:ts),
 		res = r,
