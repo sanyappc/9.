@@ -3,7 +3,7 @@
  - Description : Модуль для парсинга.
  - Stability : experimental
 -}
-module NDParse(parser) where
+module NDParse(parser,fparser) where
 
 import Text.ParserCombinators.Parsec ( parse, Parser, manyTill,
                                        try, eof, string, char,
@@ -180,6 +180,34 @@ ppushf = do
          skip1
          return (NDPush (NDTYPEf tmp))
 -- functions - end
+-- filepaths parser - begin
+fparser :: String -> [String]
+fparser string = case ( parse fparser' "" string ) of
+                     Left err -> []
+                     Right xs -> xs
+fparser' = many1 (try fquoted <|> fspaced)
+fquoted = do
+          char '"'
+          tmp <- many ( try ( many1 $ noneOf "\\\"" ) <|> fspace )
+          char '"'
+          skip
+          return (concat tmp)
+fspaced :: Parser String
+fspaced = do
+          tmp <- many1 ( try(many1 $ noneOf "\\ ") <|> fspace)
+          skip
+          return (concat tmp)
+fspace :: Parser String
+fspace = do
+	char '\\'
+	tmp <- fochar
+	return [tmp]
+fochar :: Parser Char
+fochar = choice (map apply escapes)
+			where 
+				escapes = "\\\"\' "
+				apply c = do {char c; return c}
+-- filepaths parser - end
 skip = skipMany ( space <|> newline <|> tab ) 
 skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
 skipstring = " \a\b\f\n\r\t\v"

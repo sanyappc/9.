@@ -29,8 +29,8 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 				Just "q" -> 
 					outputStrLn "good bye!!!"
 				Just ('l':' ':files) ->	
-					outputStrLn ("loading files: " ++ (unwords $ words files)) >>  
-					return (words files) >>=
+					outputStrLn ("loading files: " ++ (unwords $ map takeFileName (fparser files))) >>  
+					return (fparser files) >>=
 					load prog >>=
 					loop
 				Just input ->	
@@ -54,7 +54,7 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 						return input
 					else do
 						inputnew <- getInputLine "> "
-						multiline (init input ++ "\n" ++ takemultiline inputnew)
+						multiline (init input ++ takemultiline inputnew)
 			takemultiline Nothing = []
 			takemultiline (Just input) = input	
 			{- loading file procedure -}
@@ -67,7 +67,7 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 						if (takeExtension x == ".9") 
 							then do
 								file <- liftIO $ readFile x
-								outputStrLn ("executing file: \""++ takeFileName x ++"\"")
+								outputStrLn ("executing file: "++ takeFileName x)
 								checkl (execute (parser file) prog) xs
 							else do
 								outputStrLn ("error: "++ takeFileName x ++": file format not recognized")
