@@ -62,7 +62,7 @@ executeCGI [] prog =
 executeCGI ((NDActionPos NDExit _ _ _ _):xs) prog = 
 	prog
 executeCGI (x:xs) prog =
-	executeCGI xs (check x (doNDAction x prog))
+	executeCGI xs (checkCGI x (doNDAction x prog))
 --	execute xs (doNDAction x prog)
 
 checkCGI::NDActionPos -> Program -> Program
