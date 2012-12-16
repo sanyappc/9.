@@ -112,7 +112,7 @@ execution (NDActionPos (NDPush a) x y _ _) P{stack = s, tmp = ts, funcs = f, res
 	P{	stack = aPush s a,
 		tmp = (owner:ts),
 		funcs = f,
-		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"push\"];\n" ++ (link i prev),
+		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"push " ++ (showT a) ++ "\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
 				showSuper (s, ts))]
 				),
@@ -594,3 +594,12 @@ ownerPrint "" =
 
 ownerPrint owner =
 	"\t<" ++ owner ++ ">"
+
+
+showT (NDTYPEi a) = "NDTYPEi "++show a
+showT (NDTYPEd a) = "NDTYPEd "++show a
+showT (NDTYPEc a) = "NDTYPEc '"++ [a] ++ "'"
+showT (NDTYPEs a) = "NDTYPEs \\\"" ++ (replaceString a []) ++ "\\\""
+showT (NDTYPEb a) = "NDTYPEb "++show a
+showT (NDTYPEf a) = "NDTYPEf "++ a
+showT (NDTYPErr a) = "NDTYPErr "++ a 
