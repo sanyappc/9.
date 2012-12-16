@@ -72,10 +72,10 @@ exec files (Just code) =
 				(\t -> loop t files codelines [] (erf (fst file) (stack t)))
 			loop prog [] ("":codelines) tcode tresult = loop prog [] codelines tcode tresult
 			loop prog [] (codeline:codelines) [] [] =
-				return (execute (parser codeline) prog) >>=
+				return (executeCGI (parser codeline) prog) >>=
 				(\t -> loop t [] codelines codeline (erl (stack t) []))
 			loop prog [] (codeline:codelines) tcode tresult =
-				return (execute (parser codeline) prog) >>=
+				return (executeCGI (parser codeline) prog) >>=
 				(\t -> loop t [] codelines (tcode++"&#13;&#10;"++codeline) (erl (stack t) tresult))
 			ec [] tcode = tcode
 			ec (codeline:codelines) [] = ec codelines codeline

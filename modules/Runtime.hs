@@ -53,6 +53,24 @@ check (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
 
 check _ prog = prog
 
+executeCGI::[NDActionPos] -> Program -> Program
+
+executeCGI _ Program{stack = (NDTYPErr err:xs), funcs = f} =
+    Program{stack = (NDTYPErr err:xs), funcs = f}
+executeCGI [] prog = 
+	prog
+executeCGI ((NDActionPos NDExit _ _ _ _):xs) prog = 
+	prog
+executeCGI (x:xs) prog =
+	executeCGI xs (checkCGI x (doNDAction x prog))
+--	execute xs (doNDAction x prog)
+
+checkCGI::NDActionPos -> Program -> Program
+
+checkCGI (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
+	Program{stack = (NDTYPErr ("error: col: " ++ (show yy) ++ ": " ++ err):xs), funcs = f}
+checkCGI _ prog = prog
+
 ------------------------------------------------------------------------
 {- Execution of single NDAction -}
 ------------------------------------------------------------------------
