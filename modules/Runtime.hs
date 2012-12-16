@@ -1,4 +1,4 @@
-{-
+{- 
 - Module :Runtime.hs
 - Description : The runtime module for our interpreter.
 - Stability : experimental
@@ -11,27 +11,22 @@ import NDParse
 import NDAction
 import NDActionHandlers
 import Data.Map
-{- Read about maps: http://book.realworldhaskell.org/read/data-structures.html -}
-{- http://www.haskell.org/ghc/docs/6.12.2/html/libraries/containers-0.3.0.0/Data-Map.html -}
 
 ------------------------------------------------------------------------
-{- Data structure for functions implementation. -}
+-- Data structure for functions implementation.
 ------------------------------------------------------------------------
 data Func = Func { actions::[NDActionPos] }
 
 ------------------------------------------------------------------------
-{- Data structure for program representation -}
+--  Data structure for program representation 
 ------------------------------------------------------------------------
 data Program = Program { stack::[NDTYPE], funcs::(Map String Func)}
 
 ------------------------------------------------------------------------
-{- Execute Actions... -}
-{- actions->stack->changed_stack -}
+-- Execute Actions...
+-- actions->stack->changed_stack
 ------------------------------------------------------------------------
 execute::[NDActionPos] -> Program -> Program
-
---execute ((NDActionPos _ xx yy _ _):ss) Program{stack = (NDTYPErr err:xs), funcs = f} =
---	Program{istack = (NDTYPErr ("Runtime error at line " ++ (show xx) ++ " and pos " ++ (show yy) ++ err):xs), funcs = f}
 
 execute _ Program{stack = (NDTYPErr err:xs), funcs = f} =
     Program{stack = (NDTYPErr err:xs), funcs = f}
@@ -44,7 +39,6 @@ execute ((NDActionPos NDExit _ _ _ _):xs) prog =
 
 execute (x:xs) prog =
 	execute xs (check x (doNDAction x prog))
---	execute xs (doNDAction x prog)
 
 check::NDActionPos -> Program -> Program
 
@@ -63,8 +57,6 @@ executeCGI ((NDActionPos NDExit _ _ _ _):xs) prog =
 	prog
 executeCGI (x:xs) prog =
 	executeCGI xs (checkCGI x (doNDAction x prog))
---	execute xs (doNDAction x prog)
-
 checkCGI::NDActionPos -> Program -> Program
 
 checkCGI (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
@@ -72,7 +64,7 @@ checkCGI (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f}
 checkCGI _ prog = prog
 
 ------------------------------------------------------------------------
-{- Execution of single NDAction -}
+--  Execution of single NDAction 
 ------------------------------------------------------------------------
 ecallf = "calling function from stack"
 
@@ -173,7 +165,7 @@ doNDAction _ Program{stack = xs, funcs = f} =
 
 
 ------------------------------------------------------------------------
-{- Function return Bool from NDBool or generate error -}
+--  Function return Bool from NDBool or generate error 
 ------------------------------------------------------------------------
 isFunc (NDTYPEf func) = True
 isFunc _ = False
