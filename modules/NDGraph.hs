@@ -62,7 +62,7 @@ executeByStepEx src =
 	where
 		heh:: P -> (String, [((Int, Int), String)])
 		heh P{stack = s, tmp = ts, funcs = _, res = (graph, stack), i = _, prev = _, owner = _} =
-			(graph ++ [graphEnd], stack ++ [((-1, -1), showSuper (s, ts))])
+			(graphEnd graph, stack ++ [((-1, -1), showSuper (s, ts))])
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
