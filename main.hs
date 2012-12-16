@@ -11,10 +11,6 @@ import Control.Monad.IO.Class
 import System.Directory(doesFileExist)
 import System.FilePath(takeExtension,takeFileName)
 
---import Prelude hiding (catch)
---import Control.Exception hiding (catch,throwIO)
---import System.IO.Error hiding (catch)
-
 main::IO ()
 
 main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
@@ -86,17 +82,3 @@ main = runInputT defaultSettings $ loop Program{stack = [], funcs = fromList []}
 				checkl prog files =
 					outputStrLn (showNew (stack prog)) >>
 					load prog files
-		{-
-			liftIO ( readFile x `catch` handleExistance )>>=
-			handleExistance' x prog >>=
-			(\t -> checkl t xs)
-			where 
-				handleExistance err | idoDoesNotExistError err = return ""
-						    | otherwise = throwIO err
-				handleExistance' name prog [] = 
-					outputStrLn ("error: file \""++name++"\" is empty or doesn't exist") >> 
-					return prog
-				handleExistance' name prog file = 
-					outputStrLn ("executing file: \""++name++"\"") >>
-					return (execute (parser file) prog)
-		-}
