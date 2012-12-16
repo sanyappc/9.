@@ -559,7 +559,7 @@ link _ "" =
 	""
 
 link i prev =
-	"\tnode" ++ (show (i - 1)) ++ "->node" ++ (show i) ++ ";\n"
+	prev ++ "->node" ++ (show i) ++ ";\n"
 
 --- хитрый костыль
 rot::String -> [String] -> [String]
