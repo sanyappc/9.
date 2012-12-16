@@ -43,11 +43,13 @@ main = do
 	ecur <- xmlGetWidget xml castToEntry "ecur"
 	curb <- xmlGetWidget xml castToButton "bcur"
 	scur <- xmlGetWidget xml castToLabel "scur"
+	sall <- xmlGetWidget xml castToLabel "sall"
 	sline <- xmlGetWidget xml castToLabel "sline"
 	scol <- xmlGetWidget xml castToLabel "scol"
 	stack <- return $ snd (executeByStepEx code)
 	-- let's go to first step
 	code <- firstmakeCode (lines code) 1 []
+	set sall [ labelText := show (length stack - 1) ]
 	setStep (show 0) 0 stack code codel stackl ecur scur sline scol
 	-- action handlers
 	onClicked nextb $ do
