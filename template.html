@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>NineDot Online</title>
+		<style type="text/css">
+			body {
+				font-size:13px;
+			}
+			div.block {
+				width: 100%;
+				display:block;
+				padding-right:10px;
+				padding-left:10px;
+			}
+			div.outfile {
+				width: 100%; 
+				display:block;
+				padding-bottom:5px;
+			}
+			div.file {
+				float: left;
+				width: 33%;
+				display:block;
+			}
+			div.textbox {
+				clear: left;
+				display: table;
+				margin: 0 auto;
+			}
+			textarea.textbox {
+				overflow-x: scroll;
+				overflow-y: scroll;
+				float: center;
+				resize: none;
+			}
+			div.button {
+				display: table;
+				margin: 0 auto;
+			}
+			input.button {
+				width: 100px;
+			}
+	</style>
+	</head>
+	<body>
+		<h1>Simplest realisation of NineDot webIface</h1>
+		<div class="block">
+			<form action="/cgi-bin/lab" method="POST" enctype="multipart/form-data">
+				<div class="outfile">	
+					<div class="file">
+						<h3>Upoad files:</h3>
+						<input type="file" name="file" size="21"> <p>
+						<input type="radio" name="file_load_radio" value="file1" checked> 1 
+						<input type="radio" name="file_load_radio" value="file2"> 2 
+						<input type="radio" name="file_load_radio" value="file3"> 3 
+						<input type="radio" name="file_load_radio" value="file4"> 4 
+						<input type="radio" name="file_load_radio" value="file5"> 5 
+						<input name="file_load" type="submit" value="Load File!">
+					</div>
+					<div class="file">
+						<h3>Loaded files:</h3>
+						<b>1.</b> $file1$ <br>
+						<b>2.</b> $file2$ <br>
+						<b>3.</b> $file3$ <br>
+						<b>4.</b> $file4$ <br>
+						<b>5.</b> $file5$ <br>
+					</div>
+					<div class="file">
+						<h3>Delete files:</h3>
+						<input type="radio" name="file_delete_radio" value="file1" checked> 1 
+						<input type="radio" name="file_delete_radio" value="file2"> 2 
+						<input type="radio" name="file_delete_radio" value="file3"> 3 
+						<input type="radio" name="file_delete_radio" value="file4"> 4 
+						<input type="radio" name="file_delete_radio" value="file5"> 5
+						<input name="file_delete" type="submit" value="Delete File!"> <br>
+					</div>
+				</div>
+				<div class="outtextbox">
+					<div class="textbox">
+						<h3>Just line-by-line code:</h3>
+						<textarea oninput="this.form.elements.result.value='';" onscroll="this.form.elements.result.scrollTop = this.scrollTop;" class="textbox" rows="20" cols="75" maxlength="3000" name="code" wrap="off" autofocus>$code$</textarea>
+						<textarea onscroll="this.form.elements.code.scrollTop = this.scrollTop;" class="textbox" rows="20" cols="75" name="result" wrap="off" readonly>$result$</textarea>	
+					</div>
+					<div><p></div>
+					<div class="button">
+						<input class="button" name="code_exec" type="submit" value="9. It!">
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+</html>
+	

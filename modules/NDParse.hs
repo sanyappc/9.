@@ -19,14 +19,10 @@ import NDAction
 
 parser :: String -> [NDActionPos]
 parser string = case ( parse parser' "" string ) of
-                     -- Left err -> [NDPush (NDTYPErr $  "error: line: " ++ show (sourceLine (errorPos err)) ++ " col: " ++ show (sourceColumn (errorPos err)) ++ makeErr (errorMessages err))]
                      Left err -> [NDActionPos (NDPush (NDTYPErr $ makeErr (errorMessages err))) (sourceLine (errorPos err)) (sourceColumn (errorPos err)) (-1) (-1)]
                      Right xs -> xs
--- makeErr ((SysUnExpect err):_) = ": unexpected input" ++ makeErr' err
 makeErr ((SysUnExpect err):_) = "unexpected input" ++ makeErr' err
--- makeErr ((UnExpect err):_) = ": unexpected item" ++ makeErr' err
 makeErr ((UnExpect err):_) = "unexpected item" ++ makeErr' err
--- makeErr ((Message err):_) = ": unknown error" ++ makeErr' err
 makeErr ((Message err):_) = "unknown error" ++ makeErr' err
 makeErr (_:xs) = makeErr xs
 makeErr _ = ": unknown error"
@@ -51,202 +47,53 @@ types = do
                try pbool <|> 
                try pchar <|> pstring
         return tmp
-{-
-actions :: Parser NDAction
-actions =  do
-           tmp <- try ppop <|> 
-                  try pdswap <|> 
-                  try pswap <|> 
-                  try protr <|> 
-                  try protl <|> 
-                  try pdup <|> 
-                  try psum <|>
-                  try psub <|> 
-                  try pmul <|> 
-                  try pdiv <|> 
-                  try pdivd <|> 
-                  try pmod <|> 
-                  try pge <|> 
-                  try ple <|> 
-                  try peq <|> 
-                  try pne <|> 
-                  try pgt <|> 
-                  try plt <|>
-                  try pnot <|> 
-                  try pand <|> 
-                  try por <|> 
-                  try pxor <|>
-                  try pcat <|>
-                  try pexit <|> 
-                  try ppushf <|>
-                  try pscallf <|>
-                  try pcallf <|>
-                  try pnewf <|> pcondition
-           return tmp
--- Simple actions - begin
-ppop :: Parser NDAction
-ppop =  do
-        string "pop"
-        skip1
-        return NDPop
-pdswap :: Parser NDAction
-pdswap = do
-         string "dswap"
-         skip1
-         return NDDSwap
-pswap :: Parser NDAction
-pswap = do
-        string "swap"
-        skip1
-        return NDSwap 
-protr :: Parser NDAction
-protr = do
-        string "rotr" <|> string "->"
-        return NDRotR
-protl :: Parser NDAction
-protl = do
-        string "rotl" <|> string "<-"
-        skip1
-        return NDRotL
-pdup :: Parser NDAction
-pdup = do
-       string "dup"
-       return NDDup
-psum :: Parser NDAction
-psum = do
-       string "+"
-       skip1
-       return NDAdd
-psub :: Parser NDAction
-psub = do
-       string "-"
-       skip1
-       return NDSub
-pmul :: Parser NDAction
-pmul = do
-       string "*"
-       skip1
-       return NDMul
-pdivd :: Parser NDAction
-pdivd = do
-        string "/"
-        skip1
-        return DivD
-pdiv :: Parser NDAction
-pdiv = do
-       string "div"
-       skip1
-       return Div
-pmod :: Parser NDAction
-pmod = do
-       string "mod"
-       skip1
-       return Mod
-pge :: Parser NDAction
-pge = do
-      string ">="
-      skip1
-      return GE
-ple :: Parser NDAction
-ple = do
-      string "<="
-      skip1
-      return LE
-peq :: Parser NDAction
-peq = do
-      string "=="
-      skip1
-      return E
-pne :: Parser NDAction
-pne = do
-      string "<>"
-      skip1
-      return NE
-pgt :: Parser NDAction
-pgt = do
-      string ">"
-      skip1
-      return G
-plt :: Parser NDAction
-plt = do
-      string "<"
-      skip1
-      return L
-pnot :: Parser NDAction
-pnot = do
-       string "~"
-       skip1
-       return NOT 
-pand :: Parser NDAction
-pand = do
-       string "&&"
-       skip1
-       return AND
-por :: Parser NDAction
-por = do
-      string "||"
-      skip1
-      return OR
-pxor :: Parser NDAction
-pxor = do
-       string "xor"
-       skip1
-       return XOR
-pcat :: Parser NDAction
-pcat = do
-       string "9."
-       skip1
-       return NDCat
--}
+-- simple actions - begin 
 actions :: Parser NDAction
 actions = choice (map apply pactions) <|>
           try ppushf <|>
-          try pscallf <|>
           try pcallf <|>
           try pnewf <|> pcondition
-                -- I need to fix some things there
-	where apply (c,e) = try $ do { string c; skip1; return e}
-pactions = [("pop",NDPop)
-           ,("dswap",NDDSwap)
-           ,("swap",NDSwap)
-           ,("rotr",NDRotR)
-           ,("->",NDRotR)
-           ,("rotl",NDRotL)
-           ,("<-",NDRotL)
-           ,("dup",NDDup)
-           ,("+",NDAdd)
-           ,("-",NDSub)
-           ,("*",NDMul)
-           ,("/",DivD)
-           ,("div",Div)
-           ,("mod",Mod)
-           ,(">=",GE)
-           ,("<=",LE)
-           ,("==",E)
-           ,("<>",NE)
-           ,(">",G)
-           ,("<",L)
-           ,("~",NOT)
-           ,("&&",AND)
-           ,("||",OR)
-           ,("xor",XOR)
-           ,("9.",NDCat)
-           ,("exit",NDExit)
-           ]
-
--- Simple actions - end  
--- Types - begin     
+	where 
+	apply (c,e) = try $ do { string c; skip1; return e}
+	pactions = [("pop",NDPop)
+			   ,("dswap",NDDSwap)
+			   ,("swap",NDSwap)
+			   ,("rotr",NDRotR)
+			   ,("->",NDRotR)
+			   ,("rotl",NDRotL)
+			   ,("<-",NDRotL)
+			   ,("dup",NDDup)
+			   ,("+",NDAdd)
+			   ,("-",NDSub)
+			   ,("*",NDMul)
+			   ,("/",DivD)
+			   ,("div",Div)
+			   ,("mod",Mod)
+			   ,(">=",GE)
+			   ,("<=",LE)
+			   ,("==",E)
+			   ,("<>",NE)
+			   ,(">",G)
+			   ,("<",L)
+			   ,("~",NOT)
+			   ,("&&",AND)
+			   ,("||",OR)
+			   ,("xor",XOR)
+			   ,("9.",NDCat)
+			   ,("exit",NDExit)
+			   ,("@",NDSCallFunction)
+			   ]
+-- simple actions - end  
+-- types - begin     
 pbool :: Parser NDAction
 pbool = do
         tmp <- string "True" <|> string "False"
+        skip1
         return (NDPush (NDTYPEb ( read tmp :: Bool )))
 pdigits :: Parser NDAction
 pdigits = do
         tmp0 <- pdf
         tmp1 <- pds tmp0
-		--tmp1 <- (try $ do { char '.'; tmp <- many1 digit; return $ NDPush (NDTYPEd (read(tmp0++"."++tmp)::Double)) }) <|>
-		--		(return $ NDPush (NDTYPEi (read tmp0::Integer)))
-        --tmp2 <- try $ pdouble (tmp0) <|> pint (tmp0)
         skip1
         return tmp1
 pdf :: Parser String
@@ -261,15 +108,6 @@ pds i = try (do{ char '.'
                ; return (NDPush (NDTYPEd (read(i++"."++tmp)::Double)))
                }) <|>
         return (NDPush (NDTYPEi (read i::Integer)))
-{-
-pdouble :: String -> Parser NDAction
-pdouble i = do
-            char '.'
-            tmp <- many1 $ digit
-            return $ NDPush (NDTYPEd ( read ( i ++ "." ++ tmp) :: Double ))
-pint :: String -> Parser NDAction
-pint i = return (NDPush (NDTYPEi ( read i :: Integer )))
--}
 pchar :: Parser NDAction
 pchar = do
         char '\''
@@ -277,11 +115,9 @@ pchar = do
         char '\''
         skip1
         return (NDPush (NDTYPEc tmp))
-        -- tmp <- between (char '\'') (char '\'') (try pchar' <|> anyChar)
 pchar' :: Parser Char
 pchar' = do
          char '\\'
-         --tmp <- try pstring1 <|> pstring2
          tmp <- pochar
          return tmp
 pstring :: Parser NDAction
@@ -294,49 +130,15 @@ pstring = do
 pstring' :: Parser String
 pstring' = do
            char '\\'
-           --tmp <- try pstring1 <|> pstring2
            tmp <- pochar
            return [tmp]
---pstring1 :: Parser Char
---pstring1 = do
---           tmp <- char '\\' <|> char '\"' <|> char '\''
---           return tmp
 pochar :: Parser Char
 pochar = choice (map apply escapes)
 			where 
 				escapes = zip "\\\"\'abfnrtv" "\\\"\'\a\b\f\n\r\t\v"
 				apply (c,e) = do {char c; return e}
-{-
-pstring2 :: Parser Char
-pstring2 = do
-           tmp <- try pstring2N <|> 
-                  try pstring2R <|> 
-                  try pstring2T <|> 
-                  try pstring2V <|> pstring2F
-           return tmp
-pstring2N :: Parser Char
-pstring2N = do
-            char 'n'
-            return '\n'
-pstring2R :: Parser Char
-pstring2R = do
-            char 'r'
-            return '\r'
-pstring2T :: Parser Char
-pstring2T = do
-            char 't'
-            return '\t'
-pstring2V :: Parser Char
-pstring2V = do
-            char 'v'
-            return '\v'
-pstring2F :: Parser Char
-pstring2F = do
-            char 'f'
-            return '\f'
--}
--- Types - end   
--- IF statement - begin
+-- types - end   
+-- if statement - begin
 parserelse :: Parser [NDActionPos]
 parserelse = do
              string "else"
@@ -346,6 +148,7 @@ parserelse = do
 parserendif :: Parser [NDActionPos]
 parserendif = do
               string "endif"
+              skip1
               return []
 pcondition :: Parser NDAction
 pcondition = do
@@ -355,20 +158,8 @@ pcondition = do
              pthen <- manyTill skipper (lookAhead ( try (string "else") <|> try (string "endif")))
              pelse <- try parserelse <|> parserendif
              return (NDIf pthen pelse)
--- IF statement - end
+-- if statement - end
 -- functions - begin
-{-
-pexit :: Parser NDAction
-pexit = do
-        string "exit"
-        skip1
-        return NDExit
--}
-pscallf :: Parser NDAction
-pscallf = do
-         char '@'
-         skip1
-         return NDSCallFunction
 pcallf :: Parser NDAction
 pcallf = do
          char '@'
