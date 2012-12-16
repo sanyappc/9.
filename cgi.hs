@@ -68,7 +68,7 @@ exec files (Just code) =
 				return (ec codelines tcode,tresult)
 			loop prog _ [] tcode tresult = return (tcode, tresult)
 			loop prog (file:files) codelines [] [] = 
-				return (executeCGI (parser (snd file)) prog) >>=
+				return (execute (parser (snd file)) prog) >>=
 				(\t -> loop t files codelines [] (erf (fst file) (stack t)))
 			loop prog [] ("":codelines) tcode tresult = loop prog [] codelines tcode tresult
 			loop prog [] (codeline:codelines) [] [] =
