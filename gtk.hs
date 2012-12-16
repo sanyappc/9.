@@ -33,7 +33,7 @@ main = do
 		Just xml -> return xml
 	window <- xmlGetWidget xml castToWindow "window"
 	onDestroy window mainQuit
-	windowSetTitle window ("9. stepper: "++filename)
+	windowSetTitle window ("9. stepper: " ++ takeFileName filename)
 	pxm <- pixbufNewFromXPMData logo
 	windowSetIcon window (Just pxm)
 	codel <- xmlGetWidget xml castToLabel "code"
