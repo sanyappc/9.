@@ -80,7 +80,7 @@ lets [] p =
 check::NDActionPos -> P -> P
 
 check (NDActionPos _ xx yy _ _) P{stack = (NDTYPErr err:xs), tmp = ts, funcs = f, res = r, i = i, prev = prev, owner = owner} =
-	P{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err):xs),
+	P{	stack = [(NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err))],
 		funcs = f,
 		tmp = (owner:ts),
 		res = r,
