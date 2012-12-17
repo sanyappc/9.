@@ -108,9 +108,12 @@ doNDAction (NDActionPos OR _ _ _ _) prog =
 	prog{stack = aOr (stack prog)}
 doNDAction (NDActionPos XOR _ _ _ _) prog =
 	prog{stack = aXor (stack prog)}
-doNDAction (NDActionPos (NDIf true false) _ _ _ _) Program{stack = (x:xs), funcs = f}
-	| toBool x = execute true Program{stack = xs, funcs = f}
-	| otherwise = execute false Program{stack = xs, funcs = f}
+doNDAction (NDActionPos (NDIf true _) _ _ _ _) Program{stack = ((NDTYPEb True):xs), funcs = f} =
+	execute true Program{stack = xs, funcs = f}
+doNDAction (NDActionPos (NDIf _ false) _ _ _ _) Program{stack = ((NDTYPEb False):xs), funcs = f} =
+	execute false Program{stack = xs, funcs = f}
+doNDAction (NDActionPos (NDIf _ _) _ _ _ _) Program{stack = ss, funcs = f} =
+	Program{stack = ((NDTYPErr "if statement: incompatible type"):ss), funcs = f}
 doNDAction (NDActionPos (NDNewFunction (NDTYPEf name) acts) _ _ _ _) prog
 	| member name (funcs prog) = prog{funcs = Data.Map.adjust (\x -> Func{actions = acts}) name (funcs prog) }
 	| otherwise = prog{funcs = Data.Map.insert name Func{actions=acts} (funcs prog) }
@@ -130,4 +133,3 @@ doNDAction _ Program{stack = xs, funcs = f} =
 ------------------------------------------------------------------------
 isFunc (NDTYPEf func) = True
 isFunc _ = False
-
