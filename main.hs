@@ -37,7 +37,7 @@ main = loop Program{stack = [], funcs = fromList []}
 					loop
 				Just input ->	
 					multiline input >>=
-					(\t -> return (execute (parser t) prog)) >>= 
+					(\t -> return (executeCGI (parser t) prog)) >>= 
 					check
 			where	
 			{- just checking -}
