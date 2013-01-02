@@ -107,7 +107,7 @@ getStack i stack =
 --runProg ((NDActionPos x a b c d):xs) prog =
 --	([((a,b),showNewLn $ stack prog)]++(runProg xs (check (NDActionPos x a b c d) (doNDAction (NDActionPos x a b c d) prog))))
 
--- logo just fo fun
+-- logo just for fun
 logo = ["35 35 11 1",
 	" \tc None",
 	".\tc #0E1897",
