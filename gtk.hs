@@ -3,6 +3,7 @@ module Main where
 import System.Environment(getArgs,getProgName)
 import System.Directory(doesFileExist)
 import System.FilePath(takeExtension,takeFileName)
+import Data.Char(ord)
 
 import NDGraph(executeByStepEx)
 
@@ -66,11 +67,11 @@ main = do
 		setStep current 0 stack code codel stackl ecur scur sline scol
 	widgetShowAll window
 	mainGUI
--- setStep sets the new step	
+-- setStep sets the new step
 setStep current i stack code codel stackl ecur scur sline scol = do
 	(current,((a,b),pstack)) <- getStack ((read current::Int)+i) stack
 	--set codel [ labelText := makeCode (a,b) code ]
-	labelSetMarkup codel ("<tt>"++ makeCode (a,b) code ++"</tt>")
+	labelSetMarkup codel ("<tt>"++ toXML (makeCode (a,b) code) ++"</tt>")
 	set stackl [ labelText := pstack ]
 	set ecur [ entryText := show current ]
 	set scur [ labelText := show current ]
@@ -84,6 +85,11 @@ showCur a = show a
 firstmakeCode [] _ result = return $ unlines result
 firstmakeCode (x:code) i result =
 	firstmakeCode code (i+1) (result++[(show i ++ "> " ++ x)])
+-- toXML replaces special characters to predefined entities
+toXML [] = []
+toXML (x:xs) | isEntity x = "&#"++show (ord x)++";"++toXML xs
+             | otherwise = x:(toXML xs)
+			where isEntity c = elem c ['"','&','\'','<','>']
 -- makeCode sets ^ to the current position in the code.
 makeCode (-2,-2) code = code
 makeCode (-1,-1) code = code
