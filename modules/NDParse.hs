@@ -25,7 +25,7 @@ makeErr ((SysUnExpect err):_) = "unexpected input" ++ makeErr' err
 makeErr ((UnExpect err):_) = "unexpected item" ++ makeErr' err
 makeErr ((Message err):_) = "unknown error" ++ makeErr' err
 makeErr (_:xs) = makeErr xs
-makeErr _ = ": unknown error"
+makeErr _ = "unknown error"
 makeErr' [] = ""
 makeErr' err = ": " ++ err
  
