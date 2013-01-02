@@ -31,12 +31,14 @@ execute _ Program{stack = (NDTYPErr err:xs), funcs = f} =
     Program{stack = (NDTYPErr err:xs), funcs = f}
 execute [] prog = 
 	prog
-execute ((NDActionPos NDExit _ _ _ _):xs) prog = 
-	prog
 execute (x:xs) prog =
 	execute xs (check x (doNDAction x prog))
 	
 check::NDActionPos -> Program -> Program
+check (NDActionPos (NDCallFunction (NDTYPEf name)) xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
+	Program{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": @" ++ name ++ ": " ++ err):xs), funcs = f}
+check (NDActionPos NDSCallFunction xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
+	Program{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ ecallf ++ ": " ++ err):xs), funcs = f}
 check (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
 	Program{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err):xs), funcs = f}
 check _ prog = prog
@@ -46,15 +48,27 @@ executeCGI _ Program{stack = (NDTYPErr err:xs), funcs = f} =
     Program{stack = (NDTYPErr err:xs), funcs = f}
 executeCGI [] prog = 
 	prog
-executeCGI ((NDActionPos NDExit _ _ _ _):xs) prog = 
-	prog
 executeCGI (x:xs) prog =
 	executeCGI xs (checkCGI x (doNDAction x prog))
 	
 checkCGI::NDActionPos -> Program -> Program
+checkCGI (NDActionPos (NDCallFunction (NDTYPEf name)) xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
+	Program{stack = (NDTYPErr ("error: col: " ++ (show yy) ++ ": @" ++ name ++ ": " ++ err):xs), funcs = f}
+checkCGI (NDActionPos NDSCallFunction xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
+	Program{stack = (NDTYPErr ("error: col: " ++ (show yy) ++ ": " ++ ecallf ++ ": " ++ err):xs), funcs = f}
 checkCGI (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f} =
 	Program{stack = (NDTYPErr ("error: col: " ++ (show yy) ++ ": " ++ err):xs), funcs = f}
 checkCGI _ prog = prog
+
+executeFunc::String -> [NDActionPos] -> Program -> Program
+executeFunc name _ Program{stack = (NDTYPErr err:xs), funcs = f} =
+    Program{stack = (NDTYPErr err:xs), funcs = f}
+executeFunc _ [] prog = 
+	prog
+executeFunc _ ((NDActionPos NDExit _ _ _ _):xs) prog = 
+	prog
+executeFunc name (x:xs) prog =
+	executeFunc name xs (doNDAction x prog)
 
 ------------------------------------------------------------------------
 --  Execution of single NDAction 
@@ -118,7 +132,7 @@ doNDAction (NDActionPos (NDNewFunction (NDTYPEf name) acts) _ _ _ _) prog
 	| member name (funcs prog) = prog{funcs = Data.Map.adjust (\x -> Func{actions = acts}) name (funcs prog) }
 	| otherwise = prog{funcs = Data.Map.insert name Func{actions=acts} (funcs prog) }
 doNDAction (NDActionPos (NDCallFunction (NDTYPEf name)) _ _ _ _) Program{stack = x, funcs = f}
-	| member name f = execute (actions (f ! name)) Program{stack = x, funcs = f}
+	| member name f = executeFunc name (actions (f ! name)) Program{stack = x, funcs = f}
 	| otherwise = Program{stack = aPush x (NDTYPErr ("undeclared function: \"" ++ name ++ "\"")), funcs = f}
 doNDAction (NDActionPos NDExit _ _ _ _) prog =
 	prog

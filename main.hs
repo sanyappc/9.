@@ -33,23 +33,23 @@ main = loop Program{stack = [], funcs = fromList []}
 					--outputStrLn ("loading files: " ++ (unwords $ map takeFileName (fparser files))) >>  
 					putStrLn ("loading files: " ++ (unwords $ map takeFileName (fparser files))) >>  
 					return (fparser files) >>=
-					load prog >>=
+					load prog prog >>=
 					loop
 				Just input ->	
 					multiline input >>=
 					(\t -> return (executeCGI (parser t) prog)) >>= 
-					check
+					check prog
 			where	
 			{- just checking -}
 			--check::Program -> InputT IO()
-			check::Program -> IO()
-			check Program{stack = ((NDTYPErr err):xs), funcs = f } =
+			check::Program -> Program -> IO()
+			check Program{stack = oldxs, funcs = oldf} Program{stack = ((NDTYPErr err):_), funcs = _ } =
 				--outputStrLn err >> 
 				putStrLn err >> 
 				--outputStrLn (showNew xs) >>
-				putStrLn (showNew xs) >>
-				loop Program{stack = xs, funcs = f}
-			check prog =
+				putStrLn (showNew oldxs) >>
+				loop Program{stack = oldxs, funcs = oldf}
+			check _ prog =
 				--outputStrLn (showNew (stack prog)) >>
 				putStrLn (showNew (stack prog)) >>
 				loop prog
@@ -66,9 +66,9 @@ main = loop Program{stack = [], funcs = fromList []}
 			takemultiline Nothing = []
 			takemultiline (Just input) = input	
 			{- loading file procedure -}
-			load prog [] = 
+			load _ prog [] = 
 				return prog
-			load prog (x:xs) = do
+			load oldprog prog (x:xs) = do
 				--exists <- liftIO $ doesFileExist x
 				exists <- doesFileExist x
 				if (exists) 
@@ -79,28 +79,28 @@ main = loop Program{stack = [], funcs = fromList []}
 								file <- readFile x
 								--outputStrLn ("executing file: "++ takeFileName x)
 								putStrLn ("executing file: "++ takeFileName x)
-								checkl (execute (parser file) prog) xs
+								checkl oldprog (execute (parser file) prog) xs
 							else do
 								--outputStrLn ("error: "++ takeFileName x ++": file format not recognized")
 								--outputStrLn (showNew (stack prog))
 								putStrLn ("error: "++ takeFileName x ++": file format not recognized")
 								putStrLn (showNew (stack prog))
-								return prog
+								return oldprog
 					else do
 						--outputStrLn ("error: "++ takeFileName x ++": no such file or directory")
 						--outputStrLn (showNew (stack prog))
 						putStrLn ("error: "++ takeFileName x ++": no such file or directory")
 						putStrLn (showNew (stack prog))
-						return prog
+						return oldprog
 				where
 				{- just checking for files -}
-				checkl Program{stack = ((NDTYPErr err):xs), funcs = f } _ =
+				checkl Program{stack = oldxs, funcs = oldf } Program{stack = ((NDTYPErr err):_), funcs = _ } _ =
 					--outputStrLn err >> 
 					--outputStrLn (showNew xs) >>
 					putStrLn err >> 
-					putStrLn (showNew xs) >>
-					load Program{stack = xs, funcs = f}	[]		
-				checkl prog files =
+					putStrLn (showNew oldxs) >>
+					return Program{stack = oldxs, funcs = oldf }	
+				checkl oldprog prog files =
 					--outputStrLn (showNew (stack prog)) >>
 					putStrLn (showNew (stack prog)) >>
-					load prog files
+					load oldprog prog files
