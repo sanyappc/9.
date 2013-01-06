@@ -82,6 +82,26 @@ lets [] p =
 
 check::NDActionPos -> P -> P
 
+check (NDActionPos (NDCallFunction (NDTYPEf name)) xx yy _ _) P{stack = (NDTYPErr err:xs), tmp = ts, funcs = f, res = r, i = i, prev = prev, owner = owner} =
+	P{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": "  ++ ": @" ++ name ++ ": " ++ err):xs),
+		funcs = f,
+		tmp = (owner:ts),
+		res = r,
+		i = i,
+		prev = prev,
+		owner = owner
+	}
+
+check (NDActionPos NDSCallFunction xx yy _ _) P{stack = (NDTYPErr err:xs), tmp = ts, funcs = f, res = r, i = i, prev = prev, owner = owner} =
+	P{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ ": " ++ ecallf ++ ": " ++ err):xs),
+		funcs = f,
+		tmp = (owner:ts),
+		res = r,
+		i = i,
+		prev = prev,
+		owner = owner
+	}
+
 check (NDActionPos _ xx yy _ _) P{stack = (NDTYPErr err:xs), tmp = ts, funcs = f, res = r, i = i, prev = prev, owner = owner} =
 	P{stack = (NDTYPErr ("error: line: " ++ (show xx) ++ " col: " ++ (show yy) ++ ": " ++ err):xs),
 		funcs = f,
@@ -431,7 +451,7 @@ execution (NDActionPos (NDNewFunction (NDTYPEf name) acts) x y _ _) P{stack = s,
 			stack = s,
 			tmp = ts,
 			funcs = Data.Map.adjust (\x -> Func{actions = acts}) name f,
-			res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"declare" ++ name ++ "\"];\n" ++ (link i prev),
+			res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"declare " ++ name ++ "\"];\n" ++ (link i prev),
 					stack ++ [((x, y), showSuper (s, ts))]
 					),
 			i = i + 1,
@@ -443,7 +463,7 @@ execution (NDActionPos (NDNewFunction (NDTYPEf name) acts) x y _ _) P{stack = s,
 			stack = s,
 			tmp = ts,
 			funcs = Data.Map.insert name Func{actions=acts} f,
-			res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"declare" ++ name ++ "\"];\n" ++ (link i prev),
+			res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"declare " ++ name ++ "\"];\n" ++ (link i prev),
 					stack ++ [((x, y), showSuper (s, ts))]
 					),
 			i = i + 1,
