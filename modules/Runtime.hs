@@ -61,14 +61,27 @@ checkCGI (NDActionPos _ xx yy _ _) Program{stack = (NDTYPErr err:xs), funcs = f}
 checkCGI _ prog = prog
 
 executeFunc::String -> [NDActionPos] -> Program -> Program
-executeFunc name _ Program{stack = (NDTYPErr err:xs), funcs = f} =
-    Program{stack = (NDTYPErr err:xs), funcs = f}
-executeFunc _ [] prog = 
-	prog
-executeFunc _ ((NDActionPos NDExit _ _ _ _):xs) prog = 
-	prog
-executeFunc name (x:xs) prog =
-	executeFunc name xs (doNDAction x prog)
+executeFunc _ acts prog =
+	fst (executeBody (\_ p -> p) acts prog)
+
+------------------------------------------------------------------------
+-- Execution of function body (or if-branch inside it).
+-- Returns True as second element if exit was reached,
+-- so exit inside then/else leaves the whole function.
+------------------------------------------------------------------------
+executeBody::(NDActionPos -> Program -> Program) -> [NDActionPos] -> Program -> (Program, Bool)
+executeBody _ _ Program{stack = (NDTYPErr err:xs), funcs = f} =
+	(Program{stack = (NDTYPErr err:xs), funcs = f}, False)
+executeBody _ [] prog =
+	(prog, False)
+executeBody _ ((NDActionPos NDExit _ _ _ _):_) prog =
+	(prog, True)
+executeBody wrap (x@(NDActionPos (NDIf true false) _ _ _ _):xs) Program{stack = ((NDTYPEb b):ss), funcs = f} =
+	case executeBody check (if b then true else false) Program{stack = ss, funcs = f} of
+		(prog, True) -> (prog, True)
+		(prog, False) -> executeBody wrap xs (wrap x prog)
+executeBody wrap (x:xs) prog =
+	executeBody wrap xs (wrap x (doNDAction x prog))
 
 ------------------------------------------------------------------------
 --  Execution of single NDAction 
