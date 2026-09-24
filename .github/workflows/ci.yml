@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc: ['9.4', '9.10']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: latest
+
+      - name: Cache cabal store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ runner.os }}-ghc-${{ matrix.ghc }}-${{ hashFiles('ninedot.cabal') }}
+
+      - name: Build
+        run: |
+          cabal update
+          cabal build all
+
+      - name: Golden tests (REPL)
+        run: tests/run.sh "$(cabal list-bin ninedot)"
+
+      - name: Graph output is valid Graphviz
+        run: |
+          sudo apt-get install -y graphviz
+          for f in examples/*.9 tests/*.9; do
+            "$(cabal list-bin ninedot-graph)" "$f" | dot -Tsvg -o /dev/null || exit 1
+          done
+
+      - name: Old Makefile build still works
+        run: make cons graph

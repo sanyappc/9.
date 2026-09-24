@@ -1,0 +1,63 @@
+cabal-version:      2.4
+name:               ninedot
+version:            0.2.0
+synopsis:           9. - a small pure concatenative (stack-based) language
+description:
+  9. is a Joy/Cat-like concatenative language: every function takes the
+  stack and returns it changed. The interpreter core is pure Haskell.
+  Comes with a REPL and a step-by-step execution graph (Graphviz).
+homepage:           https://github.com/sanyappc/9.
+license:            NONE
+author:             dvdalex (sanyappc), Drogunov Igor, ldinc
+category:           Language
+build-type:         Simple
+extra-doc-files:    README.md
+data-files:         examples/*.9
+
+flag gui
+  description: Build the GTK stepper (gtk2hs + glade, legacy, unlikely to build today)
+  default:     False
+  manual:      True
+
+flag cgi
+  description: Build the CGI web version
+  default:     False
+  manual:      True
+
+common shared
+  default-language: Haskell2010
+  default-extensions: FlexibleContexts
+  hs-source-dirs:   . modules
+  ghc-options:      -Wno-tabs
+  other-modules:    NDType NDAction NDActionHandlers NDParse
+  build-depends:    base >=4 && <5, containers, parsec >=3
+
+executable ninedot
+  import:           shared
+  main-is:          main.hs
+  other-modules:    Runtime
+  build-depends:    haskeline, directory, filepath
+
+executable ninedot-graph
+  import:           shared
+  main-is:          graph.hs
+  other-modules:    NDGraph
+  build-depends:    directory, filepath
+
+executable ninedot-gtk
+  import:           shared
+  main-is:          gtk.hs
+  other-modules:    NDGraph
+  if flag(gui)
+    build-depends:  gtk, glade, directory, filepath
+  else
+    buildable:      False
+
+executable ninedot-cgi
+  import:           shared
+  main-is:          cgi.hs
+  other-modules:    Runtime
+  if flag(cgi)
+    build-depends:  cgi, bytestring, HStringTemplate
+  else
+    buildable:      False

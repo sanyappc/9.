@@ -1,0 +1,5 @@
+> loading files: if-error.9
+executing file: if-error.9
+error: line: 1 col: 3: if statement: incompatible type
+stack: []
+> good bye!!!

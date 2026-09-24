@@ -1,0 +1,5 @@
+> loading files: dip-error.9
+executing file: dip-error.9
+error: line: 1 col: 13: pop: empty stack
+stack: []
+> good bye!!!
