@@ -86,19 +86,39 @@ letsEx::Bool -> [NDActionPos] -> P -> (P, Bool)
 letsEx _ _ P{stack = (NDTYPErr err:xs), tmp = (t:ts), funcs = f, res = (graph, stack), i = i, prev = prev, owner = owner} =
 	(P{stack = xs, tmp = ts, funcs = f, res = (graph, stack ++ [((-2, -2), err)]), i = -1, prev = err, owner = owner}, False)
 
+-- error was already reached in nested function or if-branch
+letsEx _ _ p@P{i = -1} =
+	(p, False)
+
 letsEx True (act@(NDActionPos NDExit _ _ _ _):_) prog =
 	(execution act prog, True)
 
 letsEx inFunc (act@(NDActionPos (NDIf _ _) _ _ _ _):acts) prog =
-	case executionIf inFunc act prog of
-		(p, True) -> (p, True)
-		(p, False) -> letsEx inFunc acts (check act p)
+	case executionIf inFunc act (pad prog) of
+		(p, True) -> (trim p, True)
+		(p, False) -> letsEx inFunc acts (check act (trim p))
 
 letsEx inFunc (act:acts) prog =
-	letsEx inFunc acts (check act (execution act prog))
+	letsEx inFunc acts (check act (trim (execution act (pad prog))))
 
 letsEx _ [] p =
 	(p, False)
+
+--------------------------------------------------------------------------------
+{-
+   owners (tmp) must be not shorter than stack for execution patterns,
+   otherwise action on too small stack is silently skipped instead of error.
+-}
+--------------------------------------------------------------------------------
+pad::P -> P
+
+pad p =
+	p{tmp = tmp p ++ replicate 4 ""}
+
+trim::P -> P
+
+trim p =
+	p{tmp = Prelude.take (length (stack p)) (tmp p)}
 
 check::NDActionPos -> P -> P
 
@@ -566,8 +586,8 @@ execution _ p =
 --------------------------------------------------------------------------------
 executionIf::Bool -> NDActionPos -> P -> (P, Bool)
 
-executionIf inFunc (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
-	| toBool s =
+executionIf inFunc (NDActionPos (NDIf true false) x y _ _) P{stack = (s@(NDTYPEb b):ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
+	| b =
 		overEx owner (letsEx inFunc true P{
 				stack = ss,
 				tmp = ts,
@@ -592,8 +612,8 @@ executionIf inFunc (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), tmp
 				owner = owner
 			})
 
-executionIf _ act p =
-	(execution act p, False)
+executionIf _ _ p@P{stack = s, tmp = ts, owner = owner} =
+	(p{stack = (NDTYPErr "if statement: incompatible type"):s, tmp = (owner:ts)}, False)
 
 overEx::String -> (P, Bool) -> (P, Bool)
 
@@ -611,12 +631,6 @@ over::String -> P -> P
 over owner P{stack = s, tmp = tmp, funcs = f, res = (g, stack), i = i, prev = prev, owner = _} =
 	P{stack = s, tmp = tmp, funcs = f, res = (g ++ endCluster, stack), i = i, prev = prev, owner = owner}
 
---------------------------------------------------------------------------------
--- testing the value to be a bool
---------------------------------------------------------------------------------
-toBool::NDTYPE -> Bool
-toBool (NDTYPEb True) = True
-toBool _ = False
 
 --------------------------------------------------------------------------------
 -- testing type to be a function
