@@ -539,6 +539,49 @@ execution (NDActionPos NDExit x y _ _) P{stack = s, tmp = ts, funcs = f, res = (
 		prev = "node" ++ (show i),
 		owner = owner
 	}
+-- call quotation from stack
+execution (NDActionPos NDSCallFunction x y _ _) P{stack = (s@(NDTYPEq src q):ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	over owner (fst (letsEx True q P{
+				stack = ss,
+				tmp = ts,
+				funcs = f,
+				res = 	(g ++ (newCluster i ("quotation [" ++ (replaceString src []) ++ "]")),
+						stack ++ [((x, y), showSuper ((s:ss), (t:ts)))]
+						),
+				i = i + 1,
+				prev = prev,
+				owner = "quotation"
+			}))
+-- dip: execute quotation under the second element
+execution (NDActionPos NDDip x y _ _) P{stack = (s@(NDTYPEq src q):v:ss), tmp = (t:tv:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	restore (over owner (fst (letsEx True q P{
+				stack = ss,
+				tmp = ts,
+				funcs = f,
+				res = 	(g ++ (newCluster i ("dip [" ++ (replaceString src []) ++ "]")),
+						stack ++ [((x, y), showSuper ((s:v:ss), (t:tv:ts)))]
+						),
+				i = i + 1,
+				prev = prev,
+				owner = "quotation"
+			})))
+	where
+		restore p@P{i = -1} = p
+		restore p@P{stack = vs, tmp = tvs} = p{stack = v:vs, tmp = tv:tvs}
+execution (NDActionPos NDDip x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{
+		stack = dipErr s,
+		tmp = (owner:ts),
+		funcs = f,
+		res =	(g, stack),
+		i = i + 1,
+		prev = prev,
+		owner = owner
+	}
+	where
+		dipErr [] = [NDTYPErr $ edip++erempty]
+		dipErr [a] = [NDTYPErr $ edip++ernen, a]
+		dipErr xs = (NDTYPErr $ edip++ermism):xs
 -- call from stack function
 execution (NDActionPos NDSCallFunction x y xx yy) P{stack = [], tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
 	P{
@@ -624,6 +667,7 @@ overEx owner (p, exited) =
 -- error func
 --------------------------------------------------------------------------------
 ecallf = "calling function from stack"
+edip = "dip"
 --------------------------------------------------------------------------------
 -- support function for close subgraphs
 --------------------------------------------------------------------------------
@@ -701,4 +745,5 @@ showT (NDTYPEc a) = "NDTYPEc '"++ [a] ++ "'"
 showT (NDTYPEs a) = "NDTYPEs \\\"" ++ (replaceString a []) ++ "\\\""
 showT (NDTYPEb a) = "NDTYPEb "++show a
 showT (NDTYPEf a) = "NDTYPEf "++ a
+showT (NDTYPEq a _) = "NDTYPEq ["++ (replaceString a []) ++ "]"
 showT (NDTYPErr a) = "NDTYPErr "++ a 

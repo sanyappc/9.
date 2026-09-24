@@ -87,6 +87,7 @@ executeBody wrap (x:xs) prog =
 --  Execution of single NDAction 
 ------------------------------------------------------------------------
 ecallf = "calling function from stack"
+edip = "dip"
 
 doNDAction::NDActionPos -> Program -> Program
 doNDAction (NDActionPos NDPop _ _ _ _) prog =
@@ -153,9 +154,21 @@ doNDAction (NDActionPos NDExit _ _ _ _) prog =
 	prog
 doNDAction (NDActionPos NDSCallFunction xx yy xxx yyy) Program{stack = [], funcs = f} =
 	Program{stack = [NDTYPErr $ ecallf++erempty], funcs = f}
+doNDAction (NDActionPos NDSCallFunction _ _ _ _) Program{stack = ((NDTYPEq _ q):xs), funcs = f} =
+	executeFunc "" q Program{stack = xs, funcs = f}
 doNDAction (NDActionPos NDSCallFunction xx yy xxx yyy) Program{stack = (x:xs), funcs = f}  
 	| isFunc x =  doNDAction (NDActionPos (NDCallFunction x) xx yy xxx yyy) Program{stack = xs, funcs = f}
 	| otherwise = Program{stack = ((NDTYPErr $ ecallf++": incompatible type"):x:xs), funcs = f}
+doNDAction (NDActionPos NDDip _ _ _ _) Program{stack = ((NDTYPEq _ q):x:xs), funcs = f} =
+	case executeFunc "" q Program{stack = xs, funcs = f} of
+		Program{stack = ((NDTYPErr err):ys), funcs = f'} -> Program{stack = ((NDTYPErr err):ys), funcs = f'}
+		Program{stack = ys, funcs = f'} -> Program{stack = (x:ys), funcs = f'}
+doNDAction (NDActionPos NDDip _ _ _ _) Program{stack = [], funcs = f} =
+	Program{stack = [NDTYPErr $ edip++erempty], funcs = f}
+doNDAction (NDActionPos NDDip _ _ _ _) Program{stack = [x], funcs = f} =
+	Program{stack = [NDTYPErr $ edip++ernen, x], funcs = f}
+doNDAction (NDActionPos NDDip _ _ _ _) Program{stack = xs, funcs = f} =
+	Program{stack = ((NDTYPErr $ edip++ermism):xs), funcs = f}
 doNDAction _ Program{stack = xs, funcs = f} = 
 	Program{stack = ((NDTYPErr ("runtime"++erunkn)):xs), funcs = f}
 

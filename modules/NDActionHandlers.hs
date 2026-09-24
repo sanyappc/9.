@@ -244,4 +244,5 @@ aCat ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEs (y ++ x)):t
 aCat ((NDTYPEs x):(NDTYPEc y):t) = (NDTYPEs (y:x)):t
 aCat ((NDTYPEc x):(NDTYPEs y):t) = (NDTYPEs (y ++ [x])):t
 aCat ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEs [y,x]):t
+aCat ((NDTYPEq sx x):(NDTYPEq sy y):t) = (NDTYPEq (unwords (filter (not . null) [sy, sx])) (y ++ x)):t
 aCat stack = (NDTYPErr $ ecat++ermism):stack

@@ -9,9 +9,11 @@ import Text.ParserCombinators.Parsec ( parse, Parser, manyTill,
                                        try, eof, string, char,
                                        digit, many, many1, anyChar,
                                        noneOf, skipMany, newline,
-                                       tab, space, (<|>), lookAhead, choice)                                     
+                                       tab, space, (<|>), lookAhead, choice)
+import Data.Char (isSpace)
+import Data.List (dropWhileEnd)                                     
 import Text.Parsec.Error (errorMessages, errorPos,Message(SysUnExpect),Message(UnExpect),Message(Message))
-import Text.Parsec.Prim (parsecMap,getPosition)
+import Text.Parsec.Prim (parsecMap,getPosition,getInput)
 import Text.Parsec.Pos (sourceColumn,sourceLine)
 
 import NDType
@@ -52,7 +54,8 @@ actions :: Parser NDAction
 actions = choice (map apply pactions) <|>
           try ppushf <|>
           try pcallf <|>
-          try pnewf <|> pcondition
+          try pnewf <|>
+          try pquote <|> pcondition
 	where 
 	apply (c,e) = try $ do { string c; skip1; return e}
 	pactions = [("pop",NDPop)
@@ -80,6 +83,7 @@ actions = choice (map apply pactions) <|>
 			   ,("||",OR)
 			   ,("xor",XOR)
 			   ,("9.",NDCat)
+			   ,("dip",NDDip)
 			   ,("exit",NDExit)
 			   ,("@",NDSCallFunction)
 			   ]
@@ -138,6 +142,20 @@ pochar = choice (map apply escapes)
 				escapes = zip "\\\"\'abfnrtv" "\\\"\'\a\b\f\n\r\t\v"
 				apply (c,e) = do {char c; return e}
 -- types - end   
+-- quotation - begin
+pquote :: Parser NDAction
+pquote = do
+         char '['
+         before <- getInput
+         skip
+         tmp <- manyTill skipper (char ']')
+         after <- getInput
+         skip1
+         return (NDPush (NDTYPEq (source before after) tmp))
+         where
+         source before after = trim (take (length before - length after - 1) before)
+         trim = dropWhileEnd isSpace . dropWhile isSpace
+-- quotation - end
 -- if statement - begin
 parserelse :: Parser [NDActionPos]
 parserelse = do
@@ -163,12 +181,12 @@ pcondition = do
 pcallf :: Parser NDAction
 pcallf = do
          char '@'
-         tmp <- many1 $ noneOf skipstring
+         tmp <- many1 $ noneOf namestop
          return (NDCallFunction (NDTYPEf tmp))
 pnewf :: Parser NDAction
 pnewf = do
         char '.'
-        tmp1 <- many1 $ noneOf skipstring
+        tmp1 <- many1 $ noneOf namestop
         skip1
         skip
         tmp2 <- manyTill skipper (char '#')
@@ -176,7 +194,7 @@ pnewf = do
 ppushf :: Parser NDAction
 ppushf = do
          char '%'
-         tmp <- many1 $ noneOf skipstring
+         tmp <- many1 $ noneOf namestop
          skip1
          return (NDPush (NDTYPEf tmp))
 -- functions - end
@@ -209,5 +227,6 @@ fochar = choice (map apply escapes)
 				apply c = do {char c; return c}
 -- filepaths parser - end
 skip = skipMany ( space <|> newline <|> tab ) 
-skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof)
+skip1 = space <|> newline <|> tab <|> (parsecMap (\x -> 'c') eof) <|> lookAhead (char ']')
 skipstring = " \a\b\f\n\r\t\v"
+namestop = skipstring ++ "[]"
