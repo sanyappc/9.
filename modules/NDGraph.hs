@@ -71,14 +71,34 @@ executeByStepEx src =
 --------------------------------------------------------------------------------
 lets::[NDActionPos] -> P -> P
 
-lets _ P{stack = (NDTYPErr err:xs), tmp = (t:ts), funcs = f, res = (graph, stack), i = i, prev = prev, owner = owner} =
-	P{stack = xs, tmp = ts, funcs = f, res = (graph, stack ++ [((-2, -2), err)]), i = -1, prev = err, owner = owner}
+lets acts p =
+	fst (letsEx False acts p)
 
-lets (act:acts) prog =
-	lets acts (check act (execution act prog))
+--------------------------------------------------------------------------------
+{-
+   execution of actions. First argument is True inside of function body:
+   then exit (even inside of if-branches) stops it. Second element of result
+   is True if exit was reached.
+-}
+--------------------------------------------------------------------------------
+letsEx::Bool -> [NDActionPos] -> P -> (P, Bool)
 
-lets [] p =
-	p
+letsEx _ _ P{stack = (NDTYPErr err:xs), tmp = (t:ts), funcs = f, res = (graph, stack), i = i, prev = prev, owner = owner} =
+	(P{stack = xs, tmp = ts, funcs = f, res = (graph, stack ++ [((-2, -2), err)]), i = -1, prev = err, owner = owner}, False)
+
+letsEx True (act@(NDActionPos NDExit _ _ _ _):_) prog =
+	(execution act prog, True)
+
+letsEx inFunc (act@(NDActionPos (NDIf _ _) _ _ _ _):acts) prog =
+	case executionIf inFunc act prog of
+		(p, True) -> (p, True)
+		(p, False) -> letsEx inFunc acts (check act p)
+
+letsEx inFunc (act:acts) prog =
+	letsEx inFunc acts (check act (execution act prog))
+
+letsEx _ [] p =
+	(p, False)
 
 check::NDActionPos -> P -> P
 
@@ -366,13 +386,13 @@ execution (NDActionPos NE x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res =
 		owner = owner
 	}
 -- not
-execution (NDActionPos NOT x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+execution (NDActionPos NOT x y _ _) P{stack = s, tmp = (a:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
 	P{	stack = aNot s,
 		tmp = (owner:ts),
 		funcs = f,
 		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"not\"];\n" ++ (link i prev),
 				stack ++ [((x, y),
-				showSuper (s, (a:b:ts)))]
+				showSuper (s, (a:ts)))]
 				),
 		i = i + 1,
 		prev = "node" ++ (show i),
@@ -433,31 +453,8 @@ execution (NDActionPos NDCat x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, re
 	}
 
 -- if statement
-execution (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
-	| toBool s =
-		over owner (lets true P{
-				stack = ss,
-				tmp = ts,
-				funcs = f,
-				res = 	(g ++ (newCluster i "if true branch"),
-						stack ++ [((x, y), showSuper ((s:ss), (t:ts)))]
-						),
-				i = i + 1,
-				prev = prev,
-				owner = owner
-			})
-	| otherwise =
-		over owner (lets false P{
-				stack = ss,
-				tmp = ts,
-				funcs = f,
-				res = 	(g ++ (newCluster i "if false branch"),
-						stack ++ [((x, y), showSuper (ss, (t:ts)))]
-						),
-				i = i + 1,
-				prev = prev,
-				owner = owner
-			})		
+execution act@(NDActionPos (NDIf _ _) _ _ _ _) p =
+	fst (executionIf False act p)
 -- add new function
 execution (NDActionPos (NDNewFunction (NDTYPEf name) acts) x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
 	| member name f =
@@ -487,7 +484,7 @@ execution (NDActionPos (NDNewFunction (NDTYPEf name) acts) x y _ _) P{stack = s,
 -- call func from list...
 execution (NDActionPos (NDCallFunction (NDTYPEf name)) x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
 	| member name f =
-		over owner (lets (actions (f ! name)) P{
+		over owner (fst (letsEx True (actions (f ! name)) P{
 					stack = s,
 					tmp = ts,
 					funcs = f,
@@ -497,7 +494,7 @@ execution (NDActionPos (NDCallFunction (NDTYPEf name)) x y _ _) P{stack = s, tmp
 					i = i + 1,
 					prev = prev,
 					owner = name					
-				}
+				})
 			)
 	| otherwise =
 		P{
@@ -509,9 +506,19 @@ execution (NDActionPos (NDCallFunction (NDTYPEf name)) x y _ _) P{stack = s, tmp
 			prev = prev,
 			owner = owner
 		}
--- exit ?!
-execution (NDActionPos NDExit _ _ _ _) p =
-	p
+-- exit
+execution (NDActionPos NDExit x y _ _) P{stack = s, tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = s,
+		tmp = ts,
+		funcs = f,
+		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"exit\"];\n" ++ (link i prev),
+				stack ++ [((x, y),
+				showSuper (s, ts))]
+				),
+		i = i + 1,
+		prev = "node" ++ (show i),
+		owner = owner
+	}
 -- call from stack function
 execution (NDActionPos NDSCallFunction x y xx yy) P{stack = [], tmp = ts, funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
 	P{
@@ -550,6 +557,48 @@ execution (NDActionPos NDSCallFunction x y xx yy) P{stack = (s:ss), tmp = (t:ts)
 -- заглушка
 execution _ p =
 	p
+
+--------------------------------------------------------------------------------
+{-
+   if statement. First argument is True inside of function body (see letsEx).
+   Second element of result is True if exit was reached in the branch.
+-}
+--------------------------------------------------------------------------------
+executionIf::Bool -> NDActionPos -> P -> (P, Bool)
+
+executionIf inFunc (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
+	| toBool s =
+		overEx owner (letsEx inFunc true P{
+				stack = ss,
+				tmp = ts,
+				funcs = f,
+				res = 	(g ++ (newCluster i "if true branch"),
+						stack ++ [((x, y), showSuper ((s:ss), (t:ts)))]
+						),
+				i = i + 1,
+				prev = prev,
+				owner = owner
+			})
+	| otherwise =
+		overEx owner (letsEx inFunc false P{
+				stack = ss,
+				tmp = ts,
+				funcs = f,
+				res = 	(g ++ (newCluster i "if false branch"),
+						stack ++ [((x, y), showSuper (ss, (t:ts)))]
+						),
+				i = i + 1,
+				prev = prev,
+				owner = owner
+			})
+
+executionIf _ act p =
+	(execution act p, False)
+
+overEx::String -> (P, Bool) -> (P, Bool)
+
+overEx owner (p, exited) =
+	(over owner p, exited)
 
 --------------------------------------------------------------------------------
 -- error func
