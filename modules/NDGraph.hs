@@ -418,6 +418,20 @@ execution (NDActionPos XOR x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res 
 		owner = owner
 	}
 
+-- 9. (concatenation)
+execution (NDActionPos NDCat x y _ _) P{stack = s, tmp = (a:b:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner} =
+	P{	stack = aCat s,
+		tmp = (owner:ts),
+		funcs = f,
+		res = 	(g  ++ "\tnode" ++ (show i) ++ "[label = \"9.\"];\n" ++ (link i prev),
+				stack ++ [((x, y),
+				showSuper (s, (a:b:ts)))]
+				),
+		i = i + 1,
+		prev = "node" ++ (show i),
+		owner = owner
+	}
+
 -- if statement
 execution (NDActionPos (NDIf true false) x y _ _) P{stack = (s:ss), tmp = (t:ts), funcs = f, res = (g, stack), i = i, prev = prev, owner = owner}
 	| toBool s =

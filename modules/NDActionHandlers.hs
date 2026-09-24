@@ -230,3 +230,18 @@ aLE ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEb ((<=) y x)):t
 aLE ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEb ((<=) y x)):t
 aLE ((NDTYPEb x):(NDTYPEb y):t) = (NDTYPEb ((<=) y x)):t
 aLE stack = (NDTYPErr $ ele++ermism):stack
+
+-------------------------------------------------------------------------------
+--
+--  5. Конкатенация (9.)
+--
+-------------------------------------------------------------------------------
+ecat = "9."
+aCat :: [NDTYPE] -> [NDTYPE]
+aCat [] = [NDTYPErr $ ecat++erempty]
+aCat [x] = (NDTYPErr $ ecat++ernen):[x]
+aCat ((NDTYPEs x):(NDTYPEs y):t) = (NDTYPEs (y ++ x)):t
+aCat ((NDTYPEs x):(NDTYPEc y):t) = (NDTYPEs (y:x)):t
+aCat ((NDTYPEc x):(NDTYPEs y):t) = (NDTYPEs (y ++ [x])):t
+aCat ((NDTYPEc x):(NDTYPEc y):t) = (NDTYPEs [y,x]):t
+aCat stack = (NDTYPErr $ ecat++ermism):stack

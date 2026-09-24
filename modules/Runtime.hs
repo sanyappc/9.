@@ -135,6 +135,8 @@ doNDAction (NDActionPos OR _ _ _ _) prog =
 	prog{stack = aOr (stack prog)}
 doNDAction (NDActionPos XOR _ _ _ _) prog =
 	prog{stack = aXor (stack prog)}
+doNDAction (NDActionPos NDCat _ _ _ _) prog =
+	prog{stack = aCat (stack prog)}
 doNDAction (NDActionPos (NDIf true _) _ _ _ _) Program{stack = ((NDTYPEb True):xs), funcs = f} =
 	execute true Program{stack = xs, funcs = f}
 doNDAction (NDActionPos (NDIf _ false) _ _ _ _) Program{stack = ((NDTYPEb False):xs), funcs = f} =
